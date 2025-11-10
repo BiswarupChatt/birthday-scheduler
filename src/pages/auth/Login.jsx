@@ -1,0 +1,117 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useSetAtom } from "jotai";
+import {
+    Box,
+    Button,
+    TextField,
+    Typography,
+    Link,
+    Alert,
+    CircularProgress
+} from "@mui/material";
+import { authTokenAtom, userDataAtom, isAuthenticatedAtom } from "../../lib/state/atoms/authAtoms";
+import { loginUser } from "@/lib/axios/apicalls";
+
+export default function Login() {
+    const navigate = useNavigate();
+    const setAuthToken = useSetAtom(authTokenAtom);
+    const setUserData = useSetAtom(userDataAtom);
+    const setIsAuthenticated = useSetAtom(isAuthenticatedAtom);
+
+    const [formData, setFormData] = useState({
+        username: "admin2",
+        password: "1234"
+    });
+    const [error, setError] = useState("");
+    const [loading, setLoading] = useState(false);
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+    };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError("");
+        setLoading(true);
+        try {
+            const data = await loginUser(formData.username, formData.password);
+
+            const { token, admin } = data;
+
+            setAuthToken(token);
+            setUserData(admin);
+            setIsAuthenticated(true);
+
+            navigate("/");
+        } catch (err) {
+            const msg = err.response?.data?.message || "Invalid credentials";
+            setError(msg);
+            console.error("Login error:", msg);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+
+
+    return (
+        <Box component="form" onSubmit={handleSubmit} sx={{ width: "100%", maxWidth: 400 }}>
+            <Typography component="h1" variant="h5" sx={{ mb: 3 }}>
+                Log In
+            </Typography>
+
+            {error && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                    {error}
+                </Alert>
+            )}
+
+            <TextField
+                margin="normal"
+                required
+                fullWidth
+                id="username"
+                label="Username"
+                name="username"
+                autoComplete="email"
+                autoFocus
+                value={formData.username}
+                onChange={handleChange}
+            />
+
+            <TextField
+                margin="normal"
+                required
+                fullWidth
+                name="password"
+                label="Password"
+                type="password"
+                id="password"
+                autoComplete="current-password"
+                value={formData.password}
+                onChange={handleChange}
+            />
+
+            <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                sx={{ mt: 3, mb: 2 }}
+                disabled={loading}
+            >
+                {loading ? <CircularProgress size={24} /> : "Sign In"}
+            </Button>
+
+            <Box sx={{ textAlign: "center" }}>
+                <Link href="/auth/signup" variant="body2">
+                    {"Don't have an account? Sign Up"}
+                </Link>
+            </Box>
+        </Box>
+    );
+}
