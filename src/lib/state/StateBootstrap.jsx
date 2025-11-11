@@ -20,9 +20,10 @@ import {
     userDataAtom,
     isAuthenticatedAtom,
 } from "./atoms/authAtoms";
+import { setAxiosAuthToken } from "../axios/axiosConfig";
+
 
 export default function StateBootstrap() {
-
     // Settings atoms
     const [, setSidebar] = useAtom(sidebarAlignmentAtom);
     const [, setNav] = useAtom(navitemAlignmentsAtom);
@@ -37,33 +38,41 @@ export default function StateBootstrap() {
         // Settings configuration
         const configData = {
             sidebarAlignment:
-                getDataInBrowser(BROWSER_STORAGE_KEYS.sidebarAlignment) ?? ITEM_ALIGNMENTS.LEFT,
+                getDataInBrowser(BROWSER_STORAGE_KEYS.sidebarAlignment) ??
+                ITEM_ALIGNMENTS.LEFT,
             navitemAlignments:
-                getDataInBrowser(BROWSER_STORAGE_KEYS.navitemAlignments) ?? ITEM_ALIGNMENTS.RIGHT,
-            theme: getDataInBrowser(BROWSER_STORAGE_KEYS.theme) ?? THEME_OPTIONS.LIGHT,
+                getDataInBrowser(BROWSER_STORAGE_KEYS.navitemAlignments) ??
+                ITEM_ALIGNMENTS.RIGHT,
+            theme:
+                getDataInBrowser(BROWSER_STORAGE_KEYS.theme) ??
+                THEME_OPTIONS.LIGHT,
         };
 
         // Auth configuration
         const authData = {
-            authToken: getDataInBrowser(BROWSER_STORAGE_KEYS.authToken) ?? null,
-            userData: getDataInBrowser(BROWSER_STORAGE_KEYS.userData) ?? null,
-            isAuthenticated: getDataInBrowser(BROWSER_STORAGE_KEYS.isAuthenticated) ?? false,
+            authToken:
+                getDataInBrowser(BROWSER_STORAGE_KEYS.authToken) ?? null,
+            userData:
+                getDataInBrowser(BROWSER_STORAGE_KEYS.userData) ?? null,
+            isAuthenticated:
+                getDataInBrowser(BROWSER_STORAGE_KEYS.isAuthenticated) ?? false,
         };
 
         // Set settings states
         setSidebar(configData.sidebarAlignment);
         setNav(configData.navitemAlignments);
         setTheme(configData.theme);
-       
 
         // Set auth states
-        setAuthToken(authData.authToken);
+        // setAuthToken(authData.authToken);
+        setAxiosAuthToken(authData.authToken);
         setUserData(authData.userData);
-        setIsAuthenticated(authData.isAuthenticated);   
+        setIsAuthenticated(authData.isAuthenticated);
+
     }, [
-        setSidebar, 
-        setNav, 
-        setTheme, 
+        setSidebar,
+        setNav,
+        setTheme,
         setAuthToken,
         setUserData,
         setIsAuthenticated,

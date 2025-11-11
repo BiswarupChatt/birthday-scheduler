@@ -39,36 +39,7 @@ import {
 import FormatAlignLeftIcon from "@mui/icons-material/FormatAlignLeft";
 import FormatAlignRightIcon from "@mui/icons-material/FormatAlignRight";
 import WbSunnyRoundedIcon from "@mui/icons-material/WbSunnyRounded";
-
-function SectionHeader({ icon, bg, title, description }) {
-  return (
-    <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
-      <Box
-        sx={{
-          width: 40,
-          height: 40,
-          borderRadius: 2,
-          bgcolor: bg,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        {icon}
-      </Box>
-      <Box>
-        <Typography variant="h6" fontWeight={600}>
-          {title}
-        </Typography>
-        {description && (
-          <Typography variant="body2" color="text.secondary">
-            {description}
-          </Typography>
-        )}
-      </Box>
-    </Stack>
-  );
-}
+import SectionHeader from "@/components/SectionHeader.jsx";
 
 function PreviewPill({ color, label, value }) {
   return (

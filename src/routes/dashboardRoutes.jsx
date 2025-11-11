@@ -7,7 +7,7 @@ import Dashboard from "../pages/Dashboard";
 import Employee from "../pages/Employee";
 import ScheduleMessages from "../pages/ScheduleMessages";
 import Connection from "../pages/Connection";
-import Account from "../pages/Account";
+import Account from "../pages/account/Account";
 import Settings from "../pages/settings/Settings";
 import NotFound from "../pages/NotFound";
 
