@@ -12,7 +12,7 @@ const Account = () => {
       <Divider sx={{ my: 3 }} />
 
       <SectionHeader
-        title="Security Settings"
+        title="Security"
         description="Manage your password and account security"
       />
 
