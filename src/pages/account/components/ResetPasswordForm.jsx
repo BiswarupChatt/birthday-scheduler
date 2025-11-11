@@ -70,7 +70,6 @@ const ResetPasswordForm = () => {
                 width: 1,
                 borderRadius: 3,
                 mt: 4,
-                backgroundColor: "#fafafa",
             }}
         >
             <Typography variant="h6" sx={{ mb: 2, fontWeight: "bold" }}>
