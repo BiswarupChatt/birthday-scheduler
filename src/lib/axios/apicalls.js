@@ -10,23 +10,12 @@ export const resetPassword = async (oldPassword, newPassword) => {
   return res.data;
 };
 
-
 export const sendNow = async (payload) => {
   const { data } = await api.post("/message/send-now", payload);
   return data;
 };
 
-export const scheduleSend = async (payload) => {
-  const { data } = await api.post("/schedule", payload);
-  return data;
-};
-
 export const resetSession = async () => {
   const { data } = await api.post("/message/reset-session");
-  return data;
-};
-
-export const getHealth = async () => {
-  const { data } = await api.get("/message");
   return data;
 };

@@ -46,6 +46,9 @@ export default function ConnectionManager() {
                 setConnected(false);
                 setUser(null);
                 setQrText(null);
+
+                // The WebSocket will push a new 'qr' event automatically after backend reconnects
+                console.log("Session reset successful. Waiting for QR...");
             } else {
                 alert("Failed to disconnect: " + data.error);
             }
@@ -55,6 +58,7 @@ export default function ConnectionManager() {
             setLoading(false);
         }
     };
+
 
     return (
         <Box

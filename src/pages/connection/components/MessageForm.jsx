@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Box, Button, TextField, Typography, Stack, Divider } from "@mui/material";
-import { sendNow, scheduleSend } from "../../../lib/axios/apicalls"
+import { sendNow } from "../../../lib/axios/apicalls"
 
 const MessageForm = () => {
     const [groupName, setGroupName] = useState("");
@@ -11,15 +11,6 @@ const MessageForm = () => {
         try {
             await sendNow({ groupName, message });
             alert("✅ Message sent successfully!");
-        } catch (err) {
-            alert("❌ Error: " + err.message);
-        }
-    };
-
-    const handleSchedule = async () => {
-        try {
-            await scheduleSend({ groupName, message, delay });
-            alert(`⏰ Message scheduled in ${delay} minute(s)!`);
         } catch (err) {
             alert("❌ Error: " + err.message);
         }
@@ -60,15 +51,6 @@ const MessageForm = () => {
                 <Stack direction="row" spacing={2}>
                     <Button variant="contained" color="success" fullWidth onClick={handleSendNow}>
                         Send Now
-                    </Button>
-                    <Button
-                        variant="contained"
-                        color="secondary"
-                        fullWidth
-                        onClick={handleSchedule}
-                        disabled={!delay}
-                    >
-                        Schedule
                     </Button>
                 </Stack>
                 <TextField
