@@ -7,27 +7,26 @@ export default function PageWrapper({ children }) {
     <Box
       sx={{
         minHeight: "100vh",
-        bgcolor: "background.default", // Tailwind bg-background
-        py: 4, // Tailwind py-8 → 8 * 4 = 32px
+        bgcolor: "background.default",
+        py: 4,
       }}
     >
       <Container
-        maxWidth="lg" // Tailwind max-w-6xl
+        maxWidth="lg"
         sx={{
-          px: { xs: 2, sm: 3, lg: 4 }, // Tailwind px-4 sm:px-6 lg:px-8
+          px: { xs: 2, sm: 3, lg: 4 },
         }}
       >
-        <Paper
-          elevation={1} // Tailwind shadow-sm
+        <Box
           sx={{
-            bgcolor: "background.paper", // Tailwind bg-card
-            borderRadius: 2, // Tailwind rounded-lg
-            px: 3, // Tailwind px-6
-            py: 4, // Tailwind py-8
+            bgcolor: "background.paper",
+            borderRadius: 2,
+            // px: 3,
+            py: 4,
           }}
         >
           {children}
-        </Paper>
+        </Box>
       </Container>
     </Box>
   );

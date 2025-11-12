@@ -29,7 +29,6 @@ const DashboardLayout = () => {
           component="main"
           sx={{
             flex: 1,
-            p: 2,
             bgcolor: "background.default",
             color: "text.primary",
             overflow: "auto",

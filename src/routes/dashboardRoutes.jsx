@@ -4,12 +4,12 @@ import ROUTES from "./routes";
 
 import DashboardLayout from "../layout/dashboardLayout/DashboardLayout";
 import Dashboard from "../pages/Dashboard";
-import Employee from "../pages/Employee";
 import ScheduleMessages from "../pages/ScheduleMessages";
 import Connection from "../pages/connection/Connection";
 import Account from "../pages/account/Account";
 import Settings from "../pages/settings/Settings";
 import NotFound from "../pages/NotFound";
+import Employee from "@/pages/employee/Employee";
 
 // Auth layout / pages
 import AuthLayout from "../layout/authLayout/AuthLayout";
