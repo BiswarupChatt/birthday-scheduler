@@ -64,7 +64,7 @@ export default function StateBootstrap() {
         setTheme(configData.theme);
 
         // Set auth states
-        // setAuthToken(authData.authToken);
+        setAuthToken(authData.authToken);
         setAxiosAuthToken(authData.authToken);
         setUserData(authData.userData);
         setIsAuthenticated(authData.isAuthenticated);
