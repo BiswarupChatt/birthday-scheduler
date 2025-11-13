@@ -1,6 +1,6 @@
 // src/features/employee/EmployeePage.jsx
 import { useState, useEffect, useMemo } from "react";
-import { Box, Typography, Snackbar, Alert, CircularProgress } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import EmployeeToolbar from "./components/EmployeeToolbar";
 import EmployeeTable from "./components/EmployeeTable";
 import EmployeeDialog from "./components/EmployeeDialog";
@@ -8,8 +8,11 @@ import ConfirmDialog from "./components/ConfirmDialog";
 import { getAllEmployees, createEmployee, updateEmployee, deleteEmployee } from "@/lib/axios/apicalls";
 import { stableSort, getComparator } from "../../utils/methods/sortUtils";
 import TableSkeleton from "./components/TableSkeleton";
+import { useToast } from "@/hooks/ToastContext";
 
 export default function EmployeePage() {
+    const toast = useToast();
+
     const [employees, setEmployees] = useState([]);
     const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState("");
@@ -27,7 +30,6 @@ export default function EmployeePage() {
     const [openConfirm, setOpenConfirm] = useState(false);
     const [deleteId, setDeleteId] = useState(null);
 
-    const [toast, setToast] = useState({ open: false, message: "", severity: "success" });
     const [statusUpdating, setStatusUpdating] = useState({});
 
     // debounce
@@ -43,7 +45,7 @@ export default function EmployeePage() {
             setEmployees(data.data || []);
             setTotal(data.total || 0);
         } catch {
-            setToast({ open: true, message: "Failed to load employees", severity: "error" });
+            toast.error("Failed to load employees"); 
         } finally {
             setLoading(false);
         }
@@ -51,7 +53,6 @@ export default function EmployeePage() {
 
     useEffect(() => {
         fetchEmployees();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [debounced, page, limit, order, orderBy]);
 
     const handleCreate = () => {
@@ -69,10 +70,10 @@ export default function EmployeePage() {
     const handleDelete = async () => {
         try {
             await deleteEmployee(deleteId);
-            setToast({ open: true, message: "Employee deleted", severity: "success" });
+            toast.success("Employee deleted");
             fetchEmployees();
         } catch {
-            setToast({ open: true, message: "Error deleting employee", severity: "error" });
+            toast.error("Error deleting employee");
         } finally {
             setOpenConfirm(false);
         }
@@ -80,29 +81,30 @@ export default function EmployeePage() {
 
     const handleSubmit = async (form, error) => {
         if (error) {
-            setToast({ open: true, message: error.message, severity: "warning" });
+            toast.warning(error.message);
             return;
         }
+
         try {
             if (formMode === "create") {
                 await createEmployee(form);
-                setToast({ open: true, message: "Employee created", severity: "success" });
+                toast.success("Employee created");
             } else {
                 await updateEmployee(current._id, form);
-                setToast({ open: true, message: "Employee updated", severity: "success" });
+                toast.success("Employee updated");
             }
+
             setOpenForm(false);
             fetchEmployees();
         } catch (e) {
-            setToast({
-                open: true,
-                message: e?.response?.data?.message || "Something went wrong",
-                severity: "error",
-            });
+            toast.error(e?.response?.data?.message || "Something went wrong");
         }
     };
 
-    const sortedRows = useMemo(() => stableSort(employees, getComparator(order, orderBy)), [employees, order, orderBy]);
+    const sortedRows = useMemo(
+        () => stableSort(employees, getComparator(order, orderBy)),
+        [employees, order, orderBy]
+    );
 
     return (
         <Box p={3}>
@@ -117,32 +119,29 @@ export default function EmployeePage() {
                 page={page}
                 setPage={setPage}
             />
-            {
-                loading ? (<>
-                    <TableSkeleton columnsCount={5} rowsCount={5} />
-                </>
-                ) : (
-                    <EmployeeTable
-                        rows={sortedRows}
-                        columnsOrder={{ order, orderBy, setOrder, setOrderBy }}
-                        loading={loading}
-                        total={total}
-                        page={page}
-                        setPage={setPage}
-                        limit={limit}
-                        setLimit={setLimit}
-                        onEdit={handleEdit}
-                        onDelete={(id) => {
-                            setDeleteId(id);
-                            setOpenConfirm(true);
-                        }}
-                        statusUpdating={statusUpdating}
-                        setStatusUpdating={setStatusUpdating}
-                        setEmployees={setEmployees}
-                        setToast={setToast}
-                    />)
-            }
 
+            {loading ? (
+                <TableSkeleton columnsCount={5} rowsCount={5} />
+            ) : (
+                <EmployeeTable
+                    rows={sortedRows}
+                    columnsOrder={{ order, orderBy, setOrder, setOrderBy }}
+                    loading={loading}
+                    total={total}
+                    page={page}
+                    setPage={setPage}
+                    limit={limit}
+                    setLimit={setLimit}
+                    onEdit={handleEdit}
+                    onDelete={(id) => {
+                        setDeleteId(id);
+                        setOpenConfirm(true);
+                    }}
+                    statusUpdating={statusUpdating}
+                    setStatusUpdating={setStatusUpdating}
+                    setEmployees={setEmployees}
+                />
+            )}
 
             <EmployeeDialog
                 open={openForm}
@@ -159,17 +158,6 @@ export default function EmployeePage() {
                 onCancel={() => setOpenConfirm(false)}
                 onConfirm={handleDelete}
             />
-
-            <Snackbar
-                open={toast.open}
-                autoHideDuration={3000}
-                onClose={() => setToast((t) => ({ ...t, open: false }))}
-                anchorOrigin={{ vertical: "top", horizontal: "right" }}
-            >
-                <Alert severity={toast.severity} variant="filled" sx={{ width: "100%" }}>
-                    {toast.message}
-                </Alert>
-            </Snackbar>
         </Box>
     );
 }

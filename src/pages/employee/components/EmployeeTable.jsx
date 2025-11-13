@@ -5,12 +5,15 @@ import {
 import { Edit, Delete } from "@mui/icons-material";
 import { formatDate } from "../../../utils/methods/dateUtils";
 import { updateEmployee } from "@/lib/axios/apicalls";
+import { useToast } from "@/hooks/ToastContext";
 
 export default function EmployeeTable({
     rows, columnsOrder, loading, total, page, setPage, limit, setLimit,
-    onEdit, onDelete, statusUpdating, setStatusUpdating, setEmployees, setToast,
+    onEdit, onDelete, statusUpdating, setStatusUpdating, setEmployees,
 }) {
     const { order, orderBy, setOrder, setOrderBy } = columnsOrder;
+
+    const toast = useToast()
 
     const handleRequestSort = (property) => {
         const isAsc = orderBy === property && order === "asc";
@@ -23,13 +26,9 @@ export default function EmployeeTable({
         try {
             await updateEmployee(emp._id, { isActive: nextChecked });
             setEmployees((prev) => prev.map((e) => (e._id === emp._id ? { ...e, isActive: nextChecked } : e)));
-            setToast({
-                open: true,
-                message: `Employee ${nextChecked ? "activated" : "deactivated"}`,
-                severity: "success",
-            });
+            toast.success(`Employee ${nextChecked ? "activated" : "deactivated"}`)
         } catch {
-            setToast({ open: true, message: "Failed to update status", severity: "error" });
+            toast.error("Failed to update status")
         } finally {
             setStatusUpdating((s) => {
                 const { [emp._id]: _, ...rest } = s;
