@@ -21,7 +21,7 @@ export default function PageWrapper({ children }) {
           sx={{
             bgcolor: "background.paper",
             borderRadius: 2,
-            // px: 3,
+            px: 3,
             py: 4,
           }}
         >

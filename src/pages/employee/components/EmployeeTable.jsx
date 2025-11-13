@@ -38,7 +38,7 @@ export default function EmployeeTable({
     };
 
     return (
-        <Paper>
+        <Paper elevation={2}>
             <TableContainer>
                 <Table size="small">
                     <TableHead>
