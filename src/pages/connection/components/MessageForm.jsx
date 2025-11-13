@@ -23,7 +23,7 @@ const MessageForm = () => {
                 maxWidth: 500,
                 mx: "auto",
                 mt: 8,
-                bgcolor: "white",
+
                 borderRadius: 3,
                 boxShadow: 4,
             }}

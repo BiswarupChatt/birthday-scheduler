@@ -66,7 +66,6 @@ export default function ConnectionManager() {
                 mt: 4,
                 p: 3,
                 textAlign: "center",
-                bgcolor: "white",
                 borderRadius: 2,
                 boxShadow: 3,
                 maxWidth: 400,
@@ -79,7 +78,7 @@ export default function ConnectionManager() {
 
             {connected ? (
                 <>
-                    <Typography color="green" variant="body1">
+                    <Typography color="success" variant="body1">
                         ✅ Connected to WhatsApp
                     </Typography>
 
