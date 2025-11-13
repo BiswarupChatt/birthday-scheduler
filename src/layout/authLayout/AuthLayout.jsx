@@ -17,7 +17,6 @@ const AuthLayout = () => {
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        bgcolor: (theme) => theme.palette.grey[100]
       }}
     >
       <Container maxWidth="sm">
