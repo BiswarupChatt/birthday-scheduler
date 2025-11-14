@@ -10,7 +10,8 @@ import {
     Grid,
     Switch,
     FormControlLabel,
-    Box
+    Box,
+    Typography
 } from "@mui/material";
 
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -146,19 +147,20 @@ export default function EmployeeDialog({
                             />
                         </Grid>
 
-                        <Grid item xs={12}>
-                            <Box display="flex" justifyContent="flex-end">
-                                <FormControlLabel
-                                    control={
-                                        <Switch
-                                            checked={!!form?.isActive}
-                                            onChange={handleToggle}
-                                        />
-                                    }
-                                    label="Active"
+                        <Grid size={12}>
+                            <Box display="flex" alignItems="center">
+                                <Typography>
+                                    {form?.isActive ? "Deactivate Employee" : "Activate Employee"}
+                                </Typography>
+
+                                <Switch
+                                    sx={{ ml: "auto" }}
+                                    checked={!!form?.isActive}
+                                    onChange={handleToggle}
                                 />
                             </Box>
                         </Grid>
+
                     </Grid>
 
                     {/* ⭐ CENTERED DATE PICKER MODAL */}
