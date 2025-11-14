@@ -9,15 +9,21 @@ import {
     TextField,
     Grid,
     Switch,
-    FormControlLabel,
     Box,
-    Typography
+    Typography,
+    InputAdornment,
+    IconButton,
 } from "@mui/material";
 
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DateCalendar } from "@mui/x-date-pickers/DateCalendar";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+
 import dayjs from "dayjs";
+import customParseFormat from "dayjs/plugin/customParseFormat";
+
+dayjs.extend(customParseFormat);
 
 const defaultForm = {
     empId: "",
@@ -38,35 +44,118 @@ export default function EmployeeDialog({
     loading = false,
 }) {
     const [form, setForm] = useState(defaultForm);
-    const isEdit = mode === "edit";
-
-    // ⭐ NEW: modal date picker state
+    const [errors, setErrors] = useState({});
     const [openDatePicker, setOpenDatePicker] = useState(false);
 
+    const isEdit = mode === "edit";
+
+    // Load initial values
     useEffect(() => {
         const safeValues =
             initialValues && Object.keys(initialValues).length > 0
                 ? initialValues
                 : defaultForm;
 
-        setForm(safeValues);
+        setForm({
+            ...safeValues,
+            dateOfBirth: safeValues.dateOfBirth
+                ? dayjs(safeValues.dateOfBirth).format("DD/MM/YYYY")
+                : "",
+        });
+
+        setErrors({});
     }, [initialValues, open]);
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setForm((prev) => ({ ...prev, [name]: value }));
+    // ---------------------------
+    // AUTO FORMAT DOB (No validation here!)
+    // ---------------------------
+    const handleDOBChange = (e) => {
+        let value = e.target.value;
+
+        value = value.replace(/[^\d]/g, ""); // only digits
+
+        if (value.length > 8) value = value.slice(0, 8);
+
+        if (value.length > 4)
+            value = value.replace(/^(\d{2})(\d{2})(\d{1,4})$/, "$1/$2/$3");
+        else if (value.length > 2)
+            value = value.replace(/^(\d{2})(\d{1,2})$/, "$1/$2");
+
+        setForm((prev) => ({ ...prev, dateOfBirth: value }));
+
+        // No validation while typing
+        setErrors((prev) => ({ ...prev, dateOfBirth: "" }));
     };
 
-    const handleToggle = (e) => {
-        setForm((prev) => ({ ...prev, isActive: e.target.checked }));
-    };
+    // ---------------------------
+    // VALIDATE ENTIRE FORM ON SUBMIT
+    // ---------------------------
+    const validateForm = () => {
+        let temp = {};
 
-    const handleSubmit = () => {
-        if (!form.firstName?.trim() || !form.empId?.trim()) {
-            onSubmit?.(null, { message: "Emp ID and First Name are required" });
-            return;
+        // First Name (REQUIRED)
+        if (!form.firstName.trim())
+            temp.firstName = "First Name is required";
+        else if (!/^[A-Za-z]+$/.test(form.firstName.trim()))
+            temp.firstName = "Only alphabets allowed";
+        else temp.firstName = "";
+
+        // Emp ID (optional)
+        if (form.empId.trim() && form.empId.trim().length < 2)
+            temp.empId = "Min 2 characters required";
+        else temp.empId = "";
+
+        // Last Name (optional)
+        if (form.lastName.trim() && !/^[A-Za-z]+$/.test(form.lastName.trim()))
+            temp.lastName = "Only alphabets allowed";
+        else temp.lastName = "";
+
+        // Phone (optional)
+        if (form.phoneNumber.trim()) {
+            if (!/^[0-9]{10}$/.test(form.phoneNumber.trim()))
+                temp.phoneNumber = "Phone must be 10 digits";
+            else temp.phoneNumber = "";
+        } else temp.phoneNumber = "";
+
+        // Designation (optional)
+        if (form.designation.trim() && form.designation.trim().length < 2)
+            temp.designation = "Min 2 characters";
+        else temp.designation = "";
+
+        // DOB (REQUIRED — VALIDATE HERE ONLY)
+        if (!form.dateOfBirth) {
+            temp.dateOfBirth = "Date of Birth is required";
+        } else {
+            const parsed = dayjs(form.dateOfBirth, "DD/MM/YYYY", true);
+            if (!parsed.isValid()) temp.dateOfBirth = "Invalid date";
+            else if (parsed.isAfter(dayjs()))
+                temp.dateOfBirth = "Cannot select future date";
+            else temp.dateOfBirth = "";
         }
-        onSubmit?.(form);
+
+        setErrors(temp);
+
+        return Object.values(temp).every((x) => x === "");
+    };
+
+    // ---------------------------
+    // SUBMIT HANDLER
+    // ---------------------------
+    const handleSubmit = () => {
+        if (!validateForm()) return;
+
+        const [dd, mm, yyyy] = form.dateOfBirth.split("/");
+        const formattedDOB = `${yyyy}-${mm}-${dd}`;
+
+        onSubmit?.({
+            ...form,
+            empId: form.empId.trim(),
+            firstName: form.firstName.trim(),
+            lastName: form.lastName.trim(),
+            phoneNumber: form.phoneNumber.trim(),
+            designation: form.designation.trim(),
+            dateOfBirth: formattedDOB,
+        });
     };
 
     return (
@@ -77,93 +166,127 @@ export default function EmployeeDialog({
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <Grid container spacing={2}>
 
+                        {/* EMP ID */}
                         <Grid size={{ xs: 12, md: 6 }}>
                             <TextField
                                 label="Emp ID"
-                                name="empId"
-                                value={form?.empId}
-                                onChange={handleChange}
                                 fullWidth
-                                required
                                 size="small"
+                                value={form.empId}
+                                onChange={(e) =>
+                                    setForm((p) => ({ ...p, empId: e.target.value }))
+                                }
+                                error={!!errors.empId}
+                                helperText={errors.empId}
                             />
                         </Grid>
 
+                        {/* DESIGNATION */}
                         <Grid size={{ xs: 12, md: 6 }}>
                             <TextField
                                 label="Designation"
-                                name="designation"
-                                value={form?.designation}
-                                onChange={handleChange}
                                 fullWidth
                                 size="small"
+                                value={form.designation}
+                                onChange={(e) =>
+                                    setForm((p) => ({ ...p, designation: e.target.value }))
+                                }
+                                error={!!errors.designation}
+                                helperText={errors.designation}
                             />
                         </Grid>
 
+                        {/* FIRST NAME (REQUIRED) */}
                         <Grid size={{ xs: 12, md: 6 }}>
                             <TextField
-                                label="First Name"
-                                name="firstName"
-                                value={form?.firstName}
-                                onChange={handleChange}
+                                label="First Name *"
                                 fullWidth
-                                required
                                 size="small"
+                                value={form.firstName}
+                                onChange={(e) =>
+                                    setForm((p) => ({ ...p, firstName: e.target.value }))
+                                }
+                                error={!!errors.firstName}
+                                helperText={errors.firstName}
                             />
                         </Grid>
 
+                        {/* LAST NAME */}
                         <Grid size={{ xs: 12, md: 6 }}>
                             <TextField
                                 label="Last Name"
-                                name="lastName"
-                                value={form?.lastName}
-                                onChange={handleChange}
                                 fullWidth
                                 size="small"
+                                value={form.lastName}
+                                onChange={(e) =>
+                                    setForm((p) => ({ ...p, lastName: e.target.value }))
+                                }
+                                error={!!errors.lastName}
+                                helperText={errors.lastName}
                             />
                         </Grid>
 
+                        {/* PHONE */}
                         <Grid size={{ xs: 12, md: 6 }}>
                             <TextField
-                                label="Phone"
-                                name="phoneNumber"
-                                value={form?.phoneNumber}
-                                onChange={handleChange}
+                                label="Phone Number"
                                 fullWidth
                                 size="small"
+                                value={form.phoneNumber}
+                                onChange={(e) =>
+                                    setForm((p) => ({ ...p, phoneNumber: e.target.value }))
+                                }
+                                error={!!errors.phoneNumber}
+                                helperText={errors.phoneNumber}
                             />
                         </Grid>
 
-                        {/* ⭐ NEW: TextField that opens modal date picker */}
+                        {/* DOB (REQUIRED) */}
                         <Grid size={{ xs: 12, md: 6 }}>
                             <TextField
-                                label="Date of Birth"
-                                value={form?.dateOfBirth || ""}
-                                onClick={() => setOpenDatePicker(true)}
+                                label="Date of Birth *"
+                                placeholder="DD/MM/YYYY"
                                 fullWidth
                                 size="small"
-                                placeholder="Select date"
-                                InputProps={{ readOnly: true }}
+                                value={form.dateOfBirth}
+                                onChange={handleDOBChange}
+                                error={!!errors.dateOfBirth}
+                                helperText={errors.dateOfBirth}
+                                slotProps={{
+                                    input: {
+                                        endAdornment: (
+                                            <InputAdornment position="end">
+                                                <IconButton
+                                                    onClick={() => setOpenDatePicker(true)}
+                                                >
+                                                    <CalendarMonthIcon />
+                                                </IconButton>
+                                            </InputAdornment>
+                                        ),
+                                    },
+                                }}
                             />
                         </Grid>
 
+                        {/* STATUS */}
                         <Grid size={12}>
                             <Box display="flex" alignItems="center">
                                 <Typography>
-                                    {form?.isActive ? "Deactivate Employee" : "Activate Employee"}
+                                    {form.isActive ? "Deactivate Employee" : "Activate Employee"}
                                 </Typography>
 
                                 <Switch
                                     sx={{ ml: "auto" }}
-                                    checked={!!form?.isActive}
-                                    onChange={handleToggle}
+                                    checked={form.isActive}
+                                    onChange={(e) =>
+                                        setForm((p) => ({ ...p, isActive: e.target.checked }))
+                                    }
                                 />
                             </Box>
                         </Grid>
-
                     </Grid>
 
-                    {/* ⭐ CENTERED DATE PICKER MODAL */}
+                    {/* CALENDAR MODAL */}
                     <Dialog
                         open={openDatePicker}
                         onClose={() => setOpenDatePicker(false)}
@@ -171,18 +294,17 @@ export default function EmployeeDialog({
                         <DialogContent>
                             <DateCalendar
                                 value={
-                                    form?.dateOfBirth
-                                        ? dayjs(form.dateOfBirth)
+                                    form.dateOfBirth && !errors.dateOfBirth
+                                        ? dayjs(form.dateOfBirth, "DD/MM/YYYY")
                                         : null
                                 }
                                 onChange={(value) => {
                                     setForm((prev) => ({
                                         ...prev,
-                                        dateOfBirth: value
-                                            ? value.format("YYYY-MM-DD")
-                                            : "",
+                                        dateOfBirth: value.format("DD/MM/YYYY"),
                                     }));
-                                    setOpenDatePicker(false); // close modal after select
+                                    setErrors((p) => ({ ...p, dateOfBirth: "" }));
+                                    setOpenDatePicker(false);
                                 }}
                             />
                         </DialogContent>
@@ -191,14 +313,10 @@ export default function EmployeeDialog({
             </DialogContent>
 
             <DialogActions>
-                <Button onClick={onClose} disabled={loading}>
+                <Button disabled={loading} onClick={onClose}>
                     Cancel
                 </Button>
-                <Button
-                    variant="contained"
-                    onClick={handleSubmit}
-                    disabled={loading}
-                >
+                <Button variant="contained" disabled={loading} onClick={handleSubmit}>
                     {isEdit ? "Save Changes" : "Create"}
                 </Button>
             </DialogActions>
