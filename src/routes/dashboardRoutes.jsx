@@ -3,7 +3,7 @@ import { Navigate } from "react-router-dom";
 import ROUTES from "./routes";
 
 import DashboardLayout from "../layout/dashboardLayout/DashboardLayout";
-import Dashboard from "../pages/Dashboard";
+import Dashboard from "../pages/dashboard/Dashboard";
 import ScheduleMessages from "../pages/ScheduleMessages";
 import Connection from "../pages/connection/Connection";
 import Account from "../pages/account/Account";

@@ -39,7 +39,7 @@ import {
 import FormatAlignLeftIcon from "@mui/icons-material/FormatAlignLeft";
 import FormatAlignRightIcon from "@mui/icons-material/FormatAlignRight";
 import WbSunnyRoundedIcon from "@mui/icons-material/WbSunnyRounded";
-import SectionHeader from "@/components/SectionHeader.jsx";
+import SectionSubHeader from "@/components/SectionSubHeader.jsx";
 
 function PreviewPill({ color, label, value }) {
   return (
@@ -105,7 +105,7 @@ export default function Settings() {
       <Stack spacing={3} sx={{ mt: 2 }}>
         {/* Theme */}
         <Box>
-          <SectionHeader
+          <SectionSubHeader
             icon={<MoonIcon />}
             bg="#F3E8FF"
             title="Theme"
@@ -142,7 +142,7 @@ export default function Settings() {
 
         {/* Sidebar Alignment */}
         <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-          <SectionHeader
+          <SectionSubHeader
             icon={<MenuIcon style={{ width: 24, height: 24, color: "#3b82f6" }} />}
             bg="#DBEAFE"
             title="Sidebar Alignment"
@@ -187,7 +187,7 @@ export default function Settings() {
 
         {/* Navbar Items Alignment */}
         <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-          <SectionHeader
+          <SectionSubHeader
             icon={<FastForward />}
             bg="#DCFCE7"
             title="Navigation Alignment"

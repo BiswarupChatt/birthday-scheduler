@@ -1,17 +1,14 @@
-import { Typography, Box, Divider } from "@mui/material";
-import SectionHeader from "@/components/SectionHeader";
+import { Box } from "@mui/material";
+import SectionSubHeader from "@/components/SectionSubHeader";
 import ResetPasswordForm from "./components/ResetPasswordForm";
+import SectionHeader from "@/components/SectionHeader";
 
 const Account = () => {
   return (
     <>
-      <Typography variant="h4" sx={{ fontWeight: "bold" }}>
-        Account
-      </Typography>
+      <SectionHeader title="Account" />
 
-      <Divider sx={{ my: 3 }} />
-
-      <SectionHeader
+      <SectionSubHeader
         title="Security"
         description="Manage your password and account security"
       />
