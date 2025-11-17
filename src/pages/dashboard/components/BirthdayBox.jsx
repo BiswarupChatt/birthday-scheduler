@@ -4,6 +4,7 @@ import { Paper, Typography, Chip, Button, Box, Grid } from '@mui/material';
 import { CalendarToday } from '@mui/icons-material';
 import { format, differenceInDays, addYears, isBefore } from "date-fns";
 import { getUpcomingBirthdays } from "@/lib/axios/apicalls";
+import BirthdaySkeleton from "./BirthdaySkeleton";
 
 export default function BirthdayBox() {
     const [birthdays, setBirthdays] = useState([]);
@@ -46,7 +47,15 @@ export default function BirthdayBox() {
         <>
             <SectionSubHeader title="Upcoming Birthday" />
 
-            {loading && <Typography>Loading...</Typography>}
+            {loading && (
+                <Grid container spacing={2}>
+                    {[1, 2, 3, 4, 5, 6].map((i) => (
+                        <Grid key={i} size={{ xs: 12, sm: 6, md: 4 }}>
+                            <BirthdaySkeleton />
+                        </Grid>
+                    ))}
+                </Grid>
+            )}
 
             {!loading && birthdays.length === 0 && (
                 <Typography>No upcoming birthdays found 🎉</Typography>
