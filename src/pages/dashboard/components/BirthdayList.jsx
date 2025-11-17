@@ -202,8 +202,9 @@ export default function BirthdayList() {
                             </Paper>
                         </Grid>
                     ))}
-                </Grid>
-            )}
+                </Grid >
+            )
+            }
         </>
     );
 }
