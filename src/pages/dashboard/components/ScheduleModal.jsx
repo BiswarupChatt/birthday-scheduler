@@ -1,4 +1,5 @@
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Box } from "@mui/material";
+import BirthdayTemplateEditor from "./BirthdayTemplateEditor";
 
 export default function ScheduleModal({ open, onClose, employee }) {
     if (!employee) return null;
@@ -16,6 +17,8 @@ export default function ScheduleModal({ open, onClose, employee }) {
                     <Typography><strong>Designation:</strong> {employee.designation || "N/A"}</Typography>
                     <Typography><strong>Days Left:</strong> {employee.diffInDays}</Typography>
                 </Box>
+
+                <BirthdayTemplateEditor />
             </DialogContent>
 
             <DialogActions>
