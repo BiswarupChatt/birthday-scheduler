@@ -7,6 +7,7 @@ import { CalendarToday, Edit, Check } from '@mui/icons-material';
 import { format, differenceInDays, addYears, isBefore } from "date-fns";
 import { getUpcomingBirthdays } from "@/lib/axios/apicalls";
 import BirthdaySkeleton from "./BirthdaySkeleton";
+import ScheduleModal from "./ScheduleModal";
 
 export default function BirthdayList() {
     const [birthdays, setBirthdays] = useState([]);
@@ -14,6 +15,8 @@ export default function BirthdayList() {
     const [days, setDays] = useState(7);
     const [editMode, setEditMode] = useState(false);
     const [tempDays, setTempDays] = useState(days);
+    const [openModal, setOpenModal] = useState(false);
+    const [selectedEmp, setSelectedEmp] = useState(null);
 
     useEffect(() => {
         fetchBirthdays(days);
@@ -198,13 +201,28 @@ export default function BirthdayList() {
                                     variant="outlined"
                                 />
 
-                                <Button variant="contained" size="small">Schedule</Button>
+                                <Button
+                                    variant="contained"
+                                    size="small"
+                                    onClick={() => {
+                                        setSelectedEmp(emp);
+                                        setOpenModal(true);
+                                    }}
+                                >
+                                    Schedule
+                                </Button>
                             </Paper>
                         </Grid>
                     ))}
                 </Grid >
             )
             }
+
+            <ScheduleModal
+                open={openModal}
+                onClose={() => setOpenModal(false)}
+                employee={selectedEmp}
+            />
         </>
     );
 }
