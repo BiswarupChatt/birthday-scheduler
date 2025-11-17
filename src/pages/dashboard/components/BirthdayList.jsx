@@ -11,7 +11,6 @@ import BirthdaySkeleton from "./BirthdaySkeleton";
 export default function BirthdayList() {
     const [birthdays, setBirthdays] = useState([]);
     const [loading, setLoading] = useState(true);
-
     const [days, setDays] = useState(7);
     const [editMode, setEditMode] = useState(false);
     const [tempDays, setTempDays] = useState(days);
@@ -139,10 +138,8 @@ export default function BirthdayList() {
                         </>
                     )}
                 </Box>
-
             </Box>
 
-            {/* Skeleton Loader */}
             {loading && (
                 <Grid container spacing={2}>
                     {[1, 2, 3, 4, 5, 6].map((i) => (
@@ -153,12 +150,10 @@ export default function BirthdayList() {
                 </Grid>
             )}
 
-            {/* No Results */}
             {!loading && birthdays.length === 0 && (
                 <Typography>No upcoming birthdays found 🎉</Typography>
             )}
 
-            {/* Results */}
             {!loading && (
                 <Grid container spacing={2}>
                     {birthdays.map((emp) => (
@@ -181,16 +176,23 @@ export default function BirthdayList() {
                                         {emp.firstName} {emp.lastName}
                                     </Typography>
 
-                                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.5 }}>
-                                        <CalendarToday sx={{ fontSize: 14, color: "text.secondary" }} />
+                                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mt: 0.5 }}>
+                                            <CalendarToday sx={{ fontSize: 14, color: "text.secondary" }} />
+                                            <Typography variant="body2" color="text.secondary">
+                                                {formatDOB(emp.dateOfBirth)}
+                                            </Typography>
+                                        </Box>
                                         <Typography variant="body2" color="text.secondary">
-                                            {formatDOB(emp.dateOfBirth)}
+                                            {
+                                                emp.designation ? (emp.designation) : null
+                                            }
                                         </Typography>
                                     </Box>
                                 </Box>
 
                                 <Chip
-                                    label={`Birthday in ${calculateDaysLeft(emp.dateOfBirth) + 1} days`}
+                                    label={`Birthday in ${emp.diffInDays} days`}
                                     size="small"
                                     color="primary"
                                     variant="outlined"
