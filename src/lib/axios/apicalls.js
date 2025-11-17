@@ -39,3 +39,8 @@ export const deleteEmployee = async (id) => {
   const { data } = await api.delete(`/employee/${id}`);
   return data;
 };
+
+export const getUpcomingBirthdays = async (days = 7) => {
+  const { data } = await api.post("/employee/upcoming-birthdays", { days });
+  return data;
+};

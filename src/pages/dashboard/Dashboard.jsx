@@ -6,11 +6,7 @@ const Dashboard = () => {
   return (
     <>
       <SectionHeader title="Dashboard" />
-      <BirthdayBox
-        name="John Doe"
-        dob="12 Aug 1998"
-        birthdayIn={2}
-      />
+      <BirthdayBox />
     </>
   )
 };
