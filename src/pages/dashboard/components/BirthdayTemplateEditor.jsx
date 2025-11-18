@@ -86,12 +86,6 @@ const EditableImage = ({ imageUrl, settings, isSelected, onSelect, onChange }) =
     );
 };
 
-const deleteText = (id) => {
-    setTexts((prev) => prev.filter((t) => t.id !== id));
-    setActiveTextId(null);
-    setSelectedElement(null);
-};
-
 const EditableText = ({ item, isSelected, onSelect, onChange }) => {
     const shapeRef = useRef(null);
     const trRef = useRef(null);
@@ -277,6 +271,12 @@ export default function BirthdayTemplateEditor() {
         e.preventDefault();
     };
 
+    const deleteText = (id) => {
+        setTexts((prev) => prev.filter((t) => t.id !== id));
+        setActiveTextId(null);
+        setSelectedElement(null);
+    };
+
     // ---- handlers ---- //
 
     const handleTemplateChange = (_, id) => {
@@ -391,59 +391,7 @@ export default function BirthdayTemplateEditor() {
         });
     };
 
-    // ---- views ---- //
 
-    // 1) UPLOADER SCREEN
-    if (!photoUrl) {
-        return (
-            <Box
-                sx={{
-                    minHeight: "100vh",
-                    bgcolor: "#0f172a",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: "#e5e7eb",
-                }}
-            >
-                <Container maxWidth="sm">
-                    <Paper
-                        elevation={6}
-                        sx={{
-                            borderRadius: 4,
-                            p: 5,
-                            textAlign: "center",
-                            border: "1px dashed rgba(148, 163, 184, 0.6)",
-                            background:
-                                "radial-gradient(circle at top, rgba(56,189,248,0.2), transparent 55%), #020617",
-                        }}
-                        onDrop={handleDrop}
-                        onDragOver={handleDragOver}
-                    >
-                        <Typography variant="h5" fontWeight={600} mb={1} color="#f9fafb">
-                            Create a Birthday Post
-                        </Typography>
-                        <Typography variant="body2" color="#94a3b8" mb={4}>
-                            Drop a photo here or upload from your device to start editing.
-                        </Typography>
-
-                        <Button
-                            variant="contained"
-                            size="large"
-                            onClick={openFileSelector}
-                            sx={{ borderRadius: 999, px: 4 }}
-                        >
-                            Upload Photo
-                        </Button>
-
-                        <Typography variant="caption" display="block" mt={3} color="#64748b">
-                            Supported: JPG, PNG. After upload, you can pick templates, add text, zoom and rotate.
-                        </Typography>
-                    </Paper>
-                </Container>
-            </Box>
-        );
-    }
 
     // 2) EDITOR SCREEN
     return (
@@ -454,9 +402,6 @@ export default function BirthdayTemplateEditor() {
                         Birthday Template Editor
                     </Typography>
                     <Stack direction="row" spacing={1}>
-                        <Button variant="outlined" onClick={handleChangePhoto}>
-                            Change Photo
-                        </Button>
                         <Button variant="contained" onClick={handleExport}>
                             Export as PNG
                         </Button>
@@ -464,17 +409,71 @@ export default function BirthdayTemplateEditor() {
                 </Toolbar>
             </AppBar>
 
-            <Container maxWidth="lg" sx={{ py: 3 }}>
-                <Stack spacing={2} alignItems="center">
-                    {/* CANVAS */}
+            <Container maxWidth="xl" sx={{ py: 3 }}>
+                {/* ---------- MAIN 3 COLUMN GRID ---------- */}
+                <Box
+                    sx={{
+                        display: "grid",
+                        gridTemplateColumns: {
+                            xs: "1fr",       // mobile
+                            md: "180px 1fr 280px", // desktop 3 column
+                        },
+                        gap: 2,
+                    }}
+                >
+
+                    {/* -------- LEFT SIDEBAR: TEMPLATE PICKER -------- */}
+                    <Paper
+                        elevation={2}
+                        sx={{
+                            p: 2,
+                            borderRadius: 3,
+                            height: "fit-content",
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 1,
+                            position: { md: "sticky" },
+                            top: { md: 90 },
+                        }}
+                    >
+                        <Typography variant="subtitle2" fontWeight={600} mb={1}>
+                            Templates
+                        </Typography>
+
+                        <ToggleButtonGroup
+                            orientation="vertical"
+                            exclusive
+                            value={selectedTemplateId}
+                            onChange={handleTemplateChange}
+                            sx={{ width: "100%" }}
+                        >
+                            {templates.map((t) => (
+                                <ToggleButton key={t.id} value={t.id} sx={{ justifyContent: "flex-start" }}>
+                                    <Box
+                                        component="img"
+                                        src={t.url}
+                                        alt={t.name}
+                                        sx={{
+                                            width: 30,
+                                            height: 30,
+                                            objectFit: "cover",
+                                            borderRadius: 1,
+                                            mr: 1,
+                                        }}
+                                    />
+                                    {t.name}
+                                </ToggleButton>
+                            ))}
+                        </ToggleButtonGroup>
+                    </Paper>
+
+                    {/* -------- CENTER COLUMN: CANVAS -------- */}
                     <Paper
                         elevation={3}
                         ref={canvasWrapperRef}
                         sx={{
                             borderRadius: 4,
                             p: 2,
-                            width: "100%",
-                            maxWidth: DEFAULT_CANVAS_SIZE + 32,
                             display: "flex",
                             justifyContent: "center",
                         }}
@@ -487,7 +486,6 @@ export default function BirthdayTemplateEditor() {
                             onTouchStart={handleStageMouseDown}
                         >
                             <Layer>
-                                {/* Base photo */}
                                 <EditableImage
                                     imageUrl={photoUrl}
                                     settings={photoSettings}
@@ -499,10 +497,10 @@ export default function BirthdayTemplateEditor() {
                                     onChange={(newSettings) => setPhotoSettings(newSettings)}
                                 />
 
-                                {/* Template overlay */}
-                                {currentTemplate && <TemplateImage url={currentTemplate.url} size={canvasSize} />}
+                                {currentTemplate && (
+                                    <TemplateImage url={currentTemplate.url} size={canvasSize} />
+                                )}
 
-                                {/* Texts on top */}
                                 {texts.map((item) => (
                                     <EditableText
                                         key={item.id}
@@ -523,57 +521,34 @@ export default function BirthdayTemplateEditor() {
                         </Stage>
                     </Paper>
 
-                    {/* TEMPLATE ROW */}
+                    {/* -------- RIGHT SIDEBAR: EDITING CONTROLLER -------- */}
                     <Paper
                         elevation={2}
                         sx={{
-                            width: "100%",
-                            borderRadius: 3,
-                            p: 1.5,
-                        }}
-                    >
-                        <Typography variant="subtitle2" fontWeight={600} mb={1}>
-                            Templates
-                        </Typography>
-                        <ToggleButtonGroup
-                            exclusive
-                            value={selectedTemplateId}
-                            onChange={handleTemplateChange}
-                        >
-                            {templates.map((t) => (
-                                <ToggleButton key={t.id} value={t.id}>
-                                    <Box
-                                        component="img"
-                                        src={t.url}
-                                        alt={t.name}
-                                        sx={{
-                                            width: 64,
-                                            height: 64,
-                                            objectFit: "cover",
-                                            borderRadius: 1,
-                                            mr: 1,
-                                        }}
-                                    />
-                                    {t.name}
-                                </ToggleButton>
-                            ))}
-                        </ToggleButtonGroup>
-                    </Paper>
-
-                    {/* --- UNIFIED EDITING CONTROLLER --- */}
-                    <Paper
-                        elevation={2}
-                        sx={{
-                            width: "100%",
-                            borderRadius: 3,
                             p: 2,
+                            borderRadius: 3,
+                            height: "fit-content",
+                            position: { md: "sticky" },
+                            top: { md: 90 },
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 2,
                         }}
                     >
+
                         {/* ----------------------- */}
-                        {/* NO SELECTION → Show Add Text */}
-                        {/* ----------------------- */}
-                        {!selectedElement && (
-                            <Stack spacing={2}>
+
+                        <Stack spacing={2}>
+                            {/* Upload / Update Photo */}
+                            <Button
+                                variant="contained"
+                                onClick={openFileSelector}
+                            >
+                                {photoUrl ? "Update Photo" : "Upload Photo"}
+                            </Button>
+
+                            {/* Add Text */}
+                            {photoUrl && (
                                 <Button
                                     variant="outlined"
                                     onClick={addText}
@@ -581,19 +556,18 @@ export default function BirthdayTemplateEditor() {
                                 >
                                     Add Text
                                 </Button>
-                            </Stack>
-                        )}
+                            )}
+                        </Stack>
 
-                        {/* ----------------------- */}
-                        {/* IMAGE SELECTED → Image Options + Add Text */}
-                        {/* ----------------------- */}
+
                         {isPhotoSelected && (
-                            <Stack spacing={2}>
-                                <Typography variant="subtitle2" fontWeight={600}>Image Controls</Typography>
+                            <>
+                                <Typography variant="subtitle2" fontWeight={600}>
+                                    Image Controls
+                                </Typography>
 
-                                {/* Zoom */}
                                 <Box>
-                                    <Typography variant="body2" fontWeight={500} mb={1}>Zoom</Typography>
+                                    <Typography variant="body2" mb={1}>Zoom</Typography>
                                     <Slider
                                         size="small"
                                         min={0.5}
@@ -604,9 +578,8 @@ export default function BirthdayTemplateEditor() {
                                     />
                                 </Box>
 
-                                {/* Rotation */}
                                 <Box>
-                                    <Typography variant="body2" fontWeight={500} mb={1}>Rotation</Typography>
+                                    <Typography variant="body2" mb={1}>Rotation</Typography>
                                     <Slider
                                         size="small"
                                         min={-180}
@@ -616,26 +589,21 @@ export default function BirthdayTemplateEditor() {
                                         onChange={(_, v) => changeRotation(v)}
                                     />
                                 </Box>
-
-                                {/* Add Text */}
-                                <Button
-                                    variant="outlined"
-                                    onClick={addText}
-                                    startIcon={<TextFieldsIcon />}
-                                >
-                                    Add Text
-                                </Button>
-                            </Stack>
+                            </>
                         )}
 
-                        {/* ----------------------- */}
-                        {/* TEXT SELECTED → Full Text Editor */}
-                        {/* ----------------------- */}
                         {isTextSelected && (
-                            <Stack spacing={2}>
+
+                            <>
+                                <Button
+                                    color="error"
+                                    variant="outlined"
+                                    onClick={() => deleteText(activeTextId)}
+                                >
+                                    Delete Text
+                                </Button>
                                 <Typography variant="subtitle2" fontWeight={600}>Text Controls</Typography>
 
-                                {/* Edit Text */}
                                 <TextField
                                     label="Edit Text"
                                     size="small"
@@ -643,7 +611,6 @@ export default function BirthdayTemplateEditor() {
                                     onChange={(e) => handleActiveTextChange(e.target.value)}
                                 />
 
-                                {/* Text styling toolbar */}
                                 <Stack direction="row" spacing={1}>
                                     <ToggleButtonGroup size="small">
                                         <ToggleButton
@@ -681,7 +648,6 @@ export default function BirthdayTemplateEditor() {
                                         </ToggleButton>
                                     </ToggleButtonGroup>
 
-                                    {/* Color Picker */}
                                     <input
                                         type="color"
                                         style={{
@@ -701,14 +667,9 @@ export default function BirthdayTemplateEditor() {
                                     />
                                 </Stack>
 
-                                {/* Font Family */}
                                 <FormControl size="small">
                                     <InputLabel>Font</InputLabel>
-                                    <Select
-                                        value={fontFamily}
-                                        label="Font"
-                                        onChange={handleFontChange}
-                                    >
+                                    <Select value={fontFamily} label="Font" onChange={handleFontChange}>
                                         <MenuItem value="Arial">Arial</MenuItem>
                                         <MenuItem value="Roboto">Roboto</MenuItem>
                                         <MenuItem value="Georgia">Georgia</MenuItem>
@@ -716,9 +677,8 @@ export default function BirthdayTemplateEditor() {
                                     </Select>
                                 </FormControl>
 
-                                {/* Font size slider */}
                                 <Box>
-                                    <Typography variant="body2" fontWeight={500} mb={1}>Font Size</Typography>
+                                    <Typography variant="body2" mb={1}>Font Size</Typography>
                                     <Slider
                                         size="small"
                                         min={10}
@@ -734,21 +694,13 @@ export default function BirthdayTemplateEditor() {
                                     />
                                 </Box>
 
-                                {/* DELETE TEXT */}
-                                <Button
-                                    color="error"
-                                    variant="outlined"
-                                    onClick={() => deleteText(activeTextId)}
-                                >
-                                    Delete Text
-                                </Button>
-                            </Stack>
+
+                            </>
                         )}
                     </Paper>
-
-
-                </Stack>
+                </Box>
             </Container>
         </Box>
     );
+    ;
 }
