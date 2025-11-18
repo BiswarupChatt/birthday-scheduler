@@ -5,6 +5,7 @@ import {
     Button,
     Container,
     FormControl,
+    Grid,
     IconButton,
     InputLabel,
     MenuItem,
@@ -22,6 +23,8 @@ import ZoomInIcon from "@mui/icons-material/ZoomIn";
 import ZoomOutIcon from "@mui/icons-material/ZoomOut";
 import RotateRightIcon from "@mui/icons-material/RotateRight";
 import TextFieldsIcon from "@mui/icons-material/TextFields";
+import RestartAltIcon from "@mui/icons-material/RestartAlt";
+
 
 import { Stage, Layer, Image as KonvaImage, Text as KonvaText, Transformer } from "react-konva";
 import useImage from "use-image";
@@ -64,6 +67,8 @@ const EditableImage = ({ imageUrl, settings, isSelected, onSelect, onChange }) =
                 scaleX={settings.scale}
                 scaleY={settings.scale}
                 rotation={settings.rotation}
+                offsetX={image.width / 2}
+                offsetY={image.height / 2}
                 onClick={onSelect}
                 onTap={onSelect}
                 onDragEnd={(e) =>
@@ -90,13 +95,12 @@ const EditableText = ({ item, isSelected, onSelect, onChange }) => {
     const shapeRef = useRef(null);
     const trRef = useRef(null);
 
-    // Attach the transformer to the selected text
     useEffect(() => {
         if (isSelected && trRef.current && shapeRef.current) {
             trRef.current.nodes([shapeRef.current]);
             trRef.current.getLayer().batchDraw();
         }
-    }, [isSelected, item]); // <= important fix: listen to item updates
+    }, [isSelected, item]);
 
     return (
         <>
@@ -188,9 +192,7 @@ export default function BirthdayTemplateEditor() {
         rotation: 0,
     });
 
-    // fit scale from image -> canvas
     const [fitScale, setFitScale] = useState(1);
-    // zoom controlled by slider (starts from center = 1)
     const [zoomFactor, setZoomFactor] = useState(1);
 
     const [texts, setTexts] = useState([]);
@@ -242,9 +244,9 @@ export default function BirthdayTemplateEditor() {
             setFitScale(scale);
             setZoomFactor(1); // center of slider
             setPhotoSettings({
-                x,
-                y,
-                scale: scale * 1, // initial = fitScale * zoomFactor
+                x: x + (width * scale) / 2,
+                y: y + (height * scale) / 2,
+                scale: scale,
                 rotation: 0,
             });
         };
@@ -259,16 +261,6 @@ export default function BirthdayTemplateEditor() {
             loadImageFromFile(file);
         };
         input.click();
-    };
-
-    const handleDrop = (e) => {
-        e.preventDefault();
-        const file = e.dataTransfer.files?.[0];
-        loadImageFromFile(file);
-    };
-
-    const handleDragOver = (e) => {
-        e.preventDefault();
     };
 
     const deleteText = (id) => {
@@ -317,18 +309,6 @@ export default function BirthdayTemplateEditor() {
         if (Array.isArray(value)) return;
         const z = clamp(value, 0.5, 2); // 1 is center
         applyZoom(z);
-    };
-
-    const nudgeZoom = (delta) => {
-        setZoomFactor((prevZoom) => {
-            const nextZoom = clamp(prevZoom + delta, 0.5, 2);
-            setPhotoSettings((prev) => ({
-                ...prev,
-                scale: fitScale * nextZoom,
-            }));
-            return nextZoom;
-        });
-        setSelectedElement("photo");
     };
 
     // Rotation controls
@@ -411,294 +391,307 @@ export default function BirthdayTemplateEditor() {
 
             <Container maxWidth="xl" sx={{ py: 3 }}>
                 {/* ---------- MAIN 3 COLUMN GRID ---------- */}
-                <Box
-                    sx={{
-                        display: "grid",
-                        gridTemplateColumns: {
-                            xs: "1fr",       // mobile
-                            md: "180px 1fr 280px", // desktop 3 column
-                        },
-                        gap: 2,
-                    }}
-                >
+                <Grid container spacing={2}>
 
                     {/* -------- LEFT SIDEBAR: TEMPLATE PICKER -------- */}
-                    <Paper
-                        elevation={2}
-                        sx={{
-                            p: 2,
-                            borderRadius: 3,
-                            height: "fit-content",
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: 1,
-                            position: { md: "sticky" },
-                            top: { md: 90 },
-                        }}
-                    >
-                        <Typography variant="subtitle2" fontWeight={600} mb={1}>
-                            Templates
-                        </Typography>
-
-                        <ToggleButtonGroup
-                            orientation="vertical"
-                            exclusive
-                            value={selectedTemplateId}
-                            onChange={handleTemplateChange}
-                            sx={{ width: "100%" }}
+                    <Grid size={{ sm: 12, md: 3 }}>
+                        <Paper
+                            sx={{
+                                p: 1,
+                                height: "fit-content",
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: 1,
+                                top: { md: 90 },
+                            }}
                         >
-                            {templates.map((t) => (
-                                <ToggleButton key={t.id} value={t.id} sx={{ justifyContent: "flex-start" }}>
-                                    <Box
-                                        component="img"
-                                        src={t.url}
-                                        alt={t.name}
-                                        sx={{
-                                            width: 30,
-                                            height: 30,
-                                            objectFit: "cover",
-                                            borderRadius: 1,
-                                            mr: 1,
-                                        }}
-                                    />
-                                    {t.name}
-                                </ToggleButton>
-                            ))}
-                        </ToggleButtonGroup>
-                    </Paper>
+
+                            <ToggleButtonGroup
+                                orientation="vertical"
+                                exclusive
+                                value={selectedTemplateId}
+                                onChange={handleTemplateChange}
+                                sx={{ width: "100%" }}
+                            >
+                                {templates.map((t) => (
+                                    <ToggleButton key={t.id} value={t.id} sx={{ justifyContent: "flex-start" }}>
+                                        <Box
+                                            component="img"
+                                            src={t.url}
+                                            alt={t.name}
+                                            sx={{
+                                                width: 30,
+                                                height: 30,
+                                                objectFit: "cover",
+                                                borderRadius: 1,
+                                                mr: 1,
+                                            }}
+                                        />
+                                        {t.name}
+                                    </ToggleButton>
+                                ))}
+                            </ToggleButtonGroup>
+                        </Paper>
+                    </Grid>
+
 
                     {/* -------- CENTER COLUMN: CANVAS -------- */}
-                    <Paper
-                        elevation={3}
-                        ref={canvasWrapperRef}
-                        sx={{
-                            borderRadius: 4,
-                            p: 2,
-                            display: "flex",
-                            justifyContent: "center",
-                        }}
-                    >
-                        <Stage
-                            width={canvasSize}
-                            height={canvasSize}
-                            ref={stageRef}
-                            onMouseDown={handleStageMouseDown}
-                            onTouchStart={handleStageMouseDown}
+                    <Grid size={{ sm: 12, md: 6 }}>
+                        <Paper
+                            ref={canvasWrapperRef}
+                            sx={{
+                                p: 1,
+                                display: "flex",
+                                justifyContent: "center",
+                            }}
                         >
-                            <Layer>
-                                <EditableImage
-                                    imageUrl={photoUrl}
-                                    settings={photoSettings}
-                                    isSelected={selectedElement === "photo"}
-                                    onSelect={() => {
-                                        setSelectedElement("photo");
-                                        setActiveTextId(null);
-                                    }}
-                                    onChange={(newSettings) => setPhotoSettings(newSettings)}
-                                />
-
-                                {currentTemplate && (
-                                    <TemplateImage url={currentTemplate.url} size={canvasSize} />
-                                )}
-
-                                {texts.map((item) => (
-                                    <EditableText
-                                        key={item.id}
-                                        item={item}
-                                        isSelected={
-                                            selectedElement &&
-                                            selectedElement.type === "text" &&
-                                            selectedElement.id === item.id
-                                        }
+                            <Stage
+                                width={canvasSize}
+                                height={canvasSize}
+                                ref={stageRef}
+                                onMouseDown={handleStageMouseDown}
+                                onTouchStart={handleStageMouseDown}
+                            >
+                                <Layer>
+                                    <EditableImage
+                                        imageUrl={photoUrl}
+                                        settings={photoSettings}
+                                        isSelected={selectedElement === "photo"}
                                         onSelect={() => {
-                                            setSelectedElement({ type: "text", id: item.id });
-                                            setActiveTextId(item.id);
+                                            setSelectedElement("photo");
+                                            setActiveTextId(null);
                                         }}
-                                        onChange={updateTextItem}
+                                        onChange={(newSettings) => setPhotoSettings(newSettings)}
                                     />
-                                ))}
-                            </Layer>
-                        </Stage>
-                    </Paper>
+
+                                    {currentTemplate && (
+                                        <TemplateImage url={currentTemplate.url} size={canvasSize} />
+                                    )}
+
+                                    {texts.map((item) => (
+                                        <EditableText
+                                            key={item.id}
+                                            item={item}
+                                            isSelected={
+                                                selectedElement &&
+                                                selectedElement.type === "text" &&
+                                                selectedElement.id === item.id
+                                            }
+                                            onSelect={() => {
+                                                setSelectedElement({ type: "text", id: item.id });
+                                                setActiveTextId(item.id);
+                                            }}
+                                            onChange={updateTextItem}
+                                        />
+                                    ))}
+                                </Layer>
+                            </Stage>
+                        </Paper>
+                    </Grid>
 
                     {/* -------- RIGHT SIDEBAR: EDITING CONTROLLER -------- */}
-                    <Paper
-                        elevation={2}
-                        sx={{
-                            p: 2,
-                            borderRadius: 3,
-                            height: "fit-content",
-                            position: { md: "sticky" },
-                            top: { md: 90 },
-                            display: "flex",
-                            flexDirection: "column",
-                            gap: 2,
-                        }}
-                    >
+                    <Grid size={{ sm: 12, md: 3 }}>
+                        <Paper
+                            sx={{
+                                p: 1,
+                                height: "fit-content",
+                                top: { md: 90 },
+                                display: "flex",
+                                flexDirection: "column",
+                                gap: 1,
+                            }}
+                        >
 
-                        {/* ----------------------- */}
+                            {/* ----------------------- */}
 
-                        <Stack spacing={2}>
-                            {/* Upload / Update Photo */}
-                            <Button
-                                variant="contained"
-                                onClick={openFileSelector}
-                            >
-                                {photoUrl ? "Update Photo" : "Upload Photo"}
-                            </Button>
-
-                            {/* Add Text */}
-                            {photoUrl && (
+                            <Stack spacing={2}>
+                                {/* Upload / Update Photo */}
                                 <Button
-                                    variant="outlined"
-                                    onClick={addText}
-                                    startIcon={<TextFieldsIcon />}
+                                    variant="contained"
+                                    onClick={openFileSelector}
                                 >
-                                    Add Text
+                                    {photoUrl ? "Update Photo" : "Upload Photo"}
                                 </Button>
+
+                                {/* Add Text */}
+                                {photoUrl && (
+                                    <Button
+                                        variant="outlined"
+                                        onClick={addText}
+                                        startIcon={<TextFieldsIcon />}
+                                    >
+                                        Add Text
+                                    </Button>
+                                )}
+                            </Stack>
+
+
+                            {isPhotoSelected && (
+                                <>
+                                    <Typography variant="subtitle2" fontWeight={600}>
+                                        Image Controls
+                                    </Typography>
+
+                                    <Box>
+                                        <Stack direction="row" alignItems="center" spacing={1}>
+                                            <Typography variant="body2" mb={1} sx={{ flexGrow: 1 }}>
+                                                Zoom
+                                            </Typography>
+
+                                            {/* Reset Zoom */}
+                                            <IconButton
+                                                size="small"
+                                                onClick={() => changeZoom(1)}
+                                            >
+                                                <RestartAltIcon fontSize="small" />
+                                            </IconButton>
+                                        </Stack>
+                                        <Slider
+                                            size="small"
+                                            min={0.5}
+                                            max={2}
+                                            step={0.05}
+                                            value={zoomFactor}
+                                            onChange={(_, v) => changeZoom(v)}
+                                        />
+                                    </Box>
+
+                                    <Box>
+                                        <Stack direction="row" alignItems="center" spacing={1}>
+                                            <Typography variant="body2" mb={1} sx={{ flexGrow: 1 }}>
+                                                Rotation
+                                            </Typography>
+
+                                            {/* Reset Rotation */}
+                                            <IconButton
+                                                size="small"
+                                                onClick={() => changeRotation(0)}
+                                            >
+                                                <RestartAltIcon fontSize="small" />
+                                            </IconButton>
+                                        </Stack>
+                                        <Slider
+                                            size="small"
+                                            min={-180}
+                                            max={180}
+                                            step={1}
+                                            value={photoSettings.rotation}
+                                            onChange={(_, v) => changeRotation(v)}
+                                        />
+                                    </Box>
+                                </>
                             )}
-                        </Stack>
 
+                            {isTextSelected && (
 
-                        {isPhotoSelected && (
-                            <>
-                                <Typography variant="subtitle2" fontWeight={600}>
-                                    Image Controls
-                                </Typography>
+                                <>
+                                    <Button
+                                        color="error"
+                                        variant="outlined"
+                                        onClick={() => deleteText(activeTextId)}
+                                    >
+                                        Delete Text
+                                    </Button>
+                                    <Typography variant="subtitle2" fontWeight={600}>Text Controls</Typography>
 
-                                <Box>
-                                    <Typography variant="body2" mb={1}>Zoom</Typography>
-                                    <Slider
+                                    <TextField
+                                        label="Edit Text"
                                         size="small"
-                                        min={0.5}
-                                        max={2}
-                                        step={0.05}
-                                        value={zoomFactor}
-                                        onChange={(_, v) => changeZoom(v)}
+                                        value={texts.find((t) => t.id === activeTextId)?.text || ""}
+                                        onChange={(e) => handleActiveTextChange(e.target.value)}
                                     />
-                                </Box>
 
-                                <Box>
-                                    <Typography variant="body2" mb={1}>Rotation</Typography>
-                                    <Slider
-                                        size="small"
-                                        min={-180}
-                                        max={180}
-                                        step={1}
-                                        value={photoSettings.rotation}
-                                        onChange={(_, v) => changeRotation(v)}
-                                    />
-                                </Box>
-                            </>
-                        )}
+                                    <Stack direction="row" spacing={1}>
+                                        <ToggleButtonGroup size="small">
+                                            <ToggleButton
+                                                value="bold"
+                                                onClick={() =>
+                                                    updateTextItem({
+                                                        ...texts.find((t) => t.id === activeTextId),
+                                                        fontStyle: "bold",
+                                                    })
+                                                }
+                                            >
+                                                <b>B</b>
+                                            </ToggleButton>
+                                            <ToggleButton
+                                                value="italic"
+                                                onClick={() =>
+                                                    updateTextItem({
+                                                        ...texts.find((t) => t.id === activeTextId),
+                                                        fontStyle: "italic",
+                                                    })
+                                                }
+                                            >
+                                                <i>I</i>
+                                            </ToggleButton>
+                                            <ToggleButton
+                                                value="underline"
+                                                onClick={() =>
+                                                    updateTextItem({
+                                                        ...texts.find((t) => t.id === activeTextId),
+                                                        textDecoration: "underline",
+                                                    })
+                                                }
+                                            >
+                                                <u>U</u>
+                                            </ToggleButton>
+                                        </ToggleButtonGroup>
 
-                        {isTextSelected && (
-
-                            <>
-                                <Button
-                                    color="error"
-                                    variant="outlined"
-                                    onClick={() => deleteText(activeTextId)}
-                                >
-                                    Delete Text
-                                </Button>
-                                <Typography variant="subtitle2" fontWeight={600}>Text Controls</Typography>
-
-                                <TextField
-                                    label="Edit Text"
-                                    size="small"
-                                    value={texts.find((t) => t.id === activeTextId)?.text || ""}
-                                    onChange={(e) => handleActiveTextChange(e.target.value)}
-                                />
-
-                                <Stack direction="row" spacing={1}>
-                                    <ToggleButtonGroup size="small">
-                                        <ToggleButton
-                                            value="bold"
-                                            onClick={() =>
+                                        <input
+                                            type="color"
+                                            style={{
+                                                width: 40,
+                                                height: 40,
+                                                border: "none",
+                                                background: "transparent",
+                                                padding: 0,
+                                            }}
+                                            value={texts.find((t) => t.id === activeTextId)?.fill || "#000"}
+                                            onChange={(e) =>
                                                 updateTextItem({
                                                     ...texts.find((t) => t.id === activeTextId),
-                                                    fontStyle: "bold",
+                                                    fill: e.target.value,
                                                 })
                                             }
-                                        >
-                                            <b>B</b>
-                                        </ToggleButton>
-                                        <ToggleButton
-                                            value="italic"
-                                            onClick={() =>
+                                        />
+                                    </Stack>
+
+                                    <FormControl size="small">
+                                        <InputLabel>Font</InputLabel>
+                                        <Select value={fontFamily} label="Font" onChange={handleFontChange}>
+                                            <MenuItem value="Arial">Arial</MenuItem>
+                                            <MenuItem value="Roboto">Roboto</MenuItem>
+                                            <MenuItem value="Georgia">Georgia</MenuItem>
+                                            <MenuItem value="Courier New">Courier New</MenuItem>
+                                        </Select>
+                                    </FormControl>
+
+                                    <Box>
+                                        <Typography variant="body2" mb={1}>Font Size</Typography>
+                                        <Slider
+                                            size="small"
+                                            min={10}
+                                            max={100}
+                                            step={1}
+                                            value={texts.find((t) => t.id === activeTextId)?.fontSize || 32}
+                                            onChange={(_, v) =>
                                                 updateTextItem({
                                                     ...texts.find((t) => t.id === activeTextId),
-                                                    fontStyle: "italic",
+                                                    fontSize: v,
                                                 })
                                             }
-                                        >
-                                            <i>I</i>
-                                        </ToggleButton>
-                                        <ToggleButton
-                                            value="underline"
-                                            onClick={() =>
-                                                updateTextItem({
-                                                    ...texts.find((t) => t.id === activeTextId),
-                                                    textDecoration: "underline",
-                                                })
-                                            }
-                                        >
-                                            <u>U</u>
-                                        </ToggleButton>
-                                    </ToggleButtonGroup>
-
-                                    <input
-                                        type="color"
-                                        style={{
-                                            width: 40,
-                                            height: 40,
-                                            border: "none",
-                                            background: "transparent",
-                                            padding: 0,
-                                        }}
-                                        value={texts.find((t) => t.id === activeTextId)?.fill || "#000"}
-                                        onChange={(e) =>
-                                            updateTextItem({
-                                                ...texts.find((t) => t.id === activeTextId),
-                                                fill: e.target.value,
-                                            })
-                                        }
-                                    />
-                                </Stack>
-
-                                <FormControl size="small">
-                                    <InputLabel>Font</InputLabel>
-                                    <Select value={fontFamily} label="Font" onChange={handleFontChange}>
-                                        <MenuItem value="Arial">Arial</MenuItem>
-                                        <MenuItem value="Roboto">Roboto</MenuItem>
-                                        <MenuItem value="Georgia">Georgia</MenuItem>
-                                        <MenuItem value="Courier New">Courier New</MenuItem>
-                                    </Select>
-                                </FormControl>
-
-                                <Box>
-                                    <Typography variant="body2" mb={1}>Font Size</Typography>
-                                    <Slider
-                                        size="small"
-                                        min={10}
-                                        max={100}
-                                        step={1}
-                                        value={texts.find((t) => t.id === activeTextId)?.fontSize || 32}
-                                        onChange={(_, v) =>
-                                            updateTextItem({
-                                                ...texts.find((t) => t.id === activeTextId),
-                                                fontSize: v,
-                                            })
-                                        }
-                                    />
-                                </Box>
+                                        />
+                                    </Box>
 
 
-                            </>
-                        )}
-                    </Paper>
-                </Box>
+                                </>
+                            )}
+                        </Paper>
+                    </Grid>
+
+                </Grid>
+
             </Container>
         </Box>
     );
