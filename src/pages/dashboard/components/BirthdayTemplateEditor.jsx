@@ -35,7 +35,7 @@ import temp3 from "../../../assets/templates/temp3.png";
 
 // ---- constants & helpers ---- //
 
-const DEFAULT_CANVAS_SIZE = 300;
+const DEFAULT_CANVAS_SIZE = 350;
 
 const clamp = (val, min, max) => Math.min(max, Math.max(min, val));
 
