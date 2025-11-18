@@ -52,7 +52,7 @@ const TemplateImage = ({ url, size, onSelect }) => {
             height={size}
             onClick={onSelect}
             onTap={onSelect}
-            listening
+            listening={false}
         />
     );
 };
