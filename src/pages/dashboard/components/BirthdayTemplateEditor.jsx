@@ -14,17 +14,13 @@ import {
     Slider,
     Stack,
     TextField,
-    ToggleButton,
-    ToggleButtonGroup,
+    Tabs,
+    Tab,
     Toolbar,
     Typography,
 } from "@mui/material";
-import ZoomInIcon from "@mui/icons-material/ZoomIn";
-import ZoomOutIcon from "@mui/icons-material/ZoomOut";
-import RotateRightIcon from "@mui/icons-material/RotateRight";
-import TextFieldsIcon from "@mui/icons-material/TextFields";
 import RestartAltIcon from "@mui/icons-material/RestartAlt";
-
+import TextFieldsIcon from "@mui/icons-material/TextFields";
 
 import { Stage, Layer, Image as KonvaImage, Text as KonvaText, Transformer } from "react-konva";
 import useImage from "use-image";
@@ -33,61 +29,60 @@ import temp1 from "../../../assets/templates/temp1.png";
 import temp2 from "../../../assets/templates/temp2.png";
 import temp3 from "../../../assets/templates/temp3.png";
 
-// ---- constants & helpers ---- //
-
+// ---------- helpers ---------- //
 const DEFAULT_CANVAS_SIZE = 350;
-
 const clamp = (val, min, max) => Math.min(max, Math.max(min, val));
-
 const fitImageToCanvas = (imgWidth, imgHeight, boxSize) => {
     const scale = Math.min(boxSize / imgWidth, boxSize / imgHeight);
     const displayWidth = imgWidth * scale;
     const displayHeight = imgHeight * scale;
-
     const x = (boxSize - displayWidth) / 2;
     const y = (boxSize - displayHeight) / 2;
-
     return { scale, x, y };
 };
 
-// ---- Konva helper components ---- //
+// ---------- small Konva wrappers ---------- //
+const TemplateImage = ({ url, size, onSelect }) => {
+    const [image] = useImage(url);
+    if (!image) return null;
+    return (
+        <KonvaImage
+            image={image}
+            width={size}
+            height={size}
+            onClick={onSelect}
+            onTap={onSelect}
+            listening
+        />
+    );
+};
 
 const EditableImage = ({ imageUrl, settings, isSelected, onSelect, onChange }) => {
     const [image] = useImage(imageUrl);
-
     if (!image) return null;
 
     return (
-        <>
-            <KonvaImage
-                image={image}
-                draggable
-                x={settings.x}
-                y={settings.y}
-                scaleX={settings.scale}
-                scaleY={settings.scale}
-                rotation={settings.rotation}
-                offsetX={image.width / 2}
-                offsetY={image.height / 2}
-                onClick={onSelect}
-                onTap={onSelect}
-                onDragEnd={(e) =>
-                    onChange({
-                        ...settings,
-                        x: e.target.x(),
-                        y: e.target.y(),
-                    })
-                }
-            />
-            {isSelected && (
-                <KonvaText
-                    text=""
-                    x={settings.x}
-                    y={settings.y}
-                    listening={false}
-                />
-            )}
-        </>
+        <KonvaImage
+            image={image}
+            x={settings.x}
+            y={settings.y}
+            draggable
+            rotation={settings.rotation}
+            scaleX={settings.scale}
+            scaleY={settings.scale}
+            offsetX={image.width / 2}
+            offsetY={image.height / 2}
+            onClick={onSelect}
+            onTap={onSelect}
+            onDragEnd={(e) => onChange({ ...settings, x: e.target.x(), y: e.target.y() })}
+            onTransformEnd={(e) => {
+                const node = e.target;
+                const sx = node.scaleX();
+                node.scaleX(1);
+                node.scaleY(1);
+                onChange({ ...settings, x: node.x(), y: node.y(), rotation: node.rotation(), scale: settings.scale * sx });
+            }}
+        />
     );
 };
 
@@ -117,27 +112,18 @@ const EditableText = ({ item, isSelected, onSelect, onChange }) => {
                 draggable
                 onClick={onSelect}
                 onTap={onSelect}
-                onDragEnd={(e) =>
-                    onChange({
-                        ...item,
-                        x: e.target.x(),
-                        y: e.target.y()
-                    })
-                }
+                onDragEnd={(e) => onChange({ ...item, x: e.target.x(), y: e.target.y() })}
                 onTransformEnd={() => {
                     const node = shapeRef.current;
                     const scaleX = node.scaleX();
-                    const scaleY = node.scaleY();
-
                     node.scaleX(1);
                     node.scaleY(1);
-
                     onChange({
                         ...item,
                         x: node.x(),
                         y: node.y(),
                         rotation: node.rotation(),
-                        fontSize: item.fontSize * scaleX, // uniform scale
+                        fontSize: Math.max(8, Math.round(item.fontSize * scaleX)),
                     });
                 }}
             />
@@ -146,52 +132,32 @@ const EditableText = ({ item, isSelected, onSelect, onChange }) => {
                 <Transformer
                     ref={trRef}
                     rotateEnabled
-                    enabledAnchors={[
-                        "top-left",
-                        "top-right",
-                        "bottom-left",
-                        "bottom-right",
-                    ]}
+                    enabledAnchors={["top-left", "top-right", "bottom-left", "bottom-right"]}
                 />
             )}
         </>
     );
 };
 
-
-const TemplateImage = ({ url, size }) => {
-    const [image] = useImage(url);
-    if (!image) return null;
-    return <KonvaImage image={image} width={size} height={size} listening={false} />;
-};
-
-// ---- templates ---- //
-
-const templates = [
-    { id: "t1", name: "Template 1", url: temp1 },
-    { id: "t2", name: "Template 2", url: temp2 },
-    { id: "t3", name: "Template 3", url: temp3 },
-];
-
-// ---- main component ---- //
-
+// ---------- main component ---------- //
 export default function BirthdayTemplateEditor() {
     const stageRef = useRef();
     const canvasWrapperRef = useRef(null);
 
     const [canvasSize, setCanvasSize] = useState(DEFAULT_CANVAS_SIZE);
 
+    const templates = [
+        { id: "t1", name: "Template 1", url: temp1 },
+        { id: "t2", name: "Template 2", url: temp2 },
+        { id: "t3", name: "Template 3", url: temp3 },
+    ];
+
+    // Editor state
+    const [activeTab, setActiveTab] = useState("template");
     const [selectedTemplateId, setSelectedTemplateId] = useState("t2");
+
     const [photoUrl, setPhotoUrl] = useState(null);
-
-    // base position/rotation + final scale (fitScale * zoomFactor)
-    const [photoSettings, setPhotoSettings] = useState({
-        x: 0,
-        y: 0,
-        scale: 1,
-        rotation: 0,
-    });
-
+    const [photoSettings, setPhotoSettings] = useState({ x: 0, y: 0, scale: 1, rotation: 0 });
     const [fitScale, setFitScale] = useState(1);
     const [zoomFactor, setZoomFactor] = useState(1);
 
@@ -199,15 +165,8 @@ export default function BirthdayTemplateEditor() {
     const [activeTextId, setActiveTextId] = useState(null);
     const [fontFamily, setFontFamily] = useState("Arial");
 
+    // selectedElement can be: null | "template" | "photo" | { type: "text", id }
     const [selectedElement, setSelectedElement] = useState(null);
-
-    const isPhotoSelected = selectedElement === "photo";
-    const isTextSelected =
-        selectedElement && selectedElement.type === "text";
-
-    const currentTemplate = templates.find((t) => t.id === selectedTemplateId);
-
-    // ---- responsive canvas size ---- //
 
     useEffect(() => {
         const handleResize = () => {
@@ -216,20 +175,28 @@ export default function BirthdayTemplateEditor() {
                 return;
             }
             const width = canvasWrapperRef.current.offsetWidth || DEFAULT_CANVAS_SIZE;
-            const size = Math.min(width - 32, DEFAULT_CANVAS_SIZE); // padding
+            const size = Math.min(width - 32, DEFAULT_CANVAS_SIZE);
             setCanvasSize(size);
         };
-
         handleResize();
         window.addEventListener("resize", handleResize);
         return () => window.removeEventListener("resize", handleResize);
     }, []);
 
-    // ---- file loading & auto-fit ---- //
+    // Auto switch tab when selection changes
+    useEffect(() => {
+        if (!selectedElement) {
+            setActiveTab("template");
+            return;
+        }
+        if (selectedElement === "photo") setActiveTab("image");
+        else if (selectedElement === "template") setActiveTab("template");
+        else if (selectedElement.type === "text") setActiveTab("text");
+    }, [selectedElement]);
 
+    // file loading & fitting
     const loadImageFromFile = (file) => {
         if (!file) return;
-
         const url = URL.createObjectURL(file);
         setPhotoUrl(url);
         setSelectedElement("photo");
@@ -240,15 +207,9 @@ export default function BirthdayTemplateEditor() {
             const { width, height } = img;
             const boxSize = canvasSize || DEFAULT_CANVAS_SIZE;
             const { scale, x, y } = fitImageToCanvas(width, height, boxSize);
-
             setFitScale(scale);
-            setZoomFactor(1); // center of slider
-            setPhotoSettings({
-                x: x + (width * scale) / 2,
-                y: y + (height * scale) / 2,
-                scale: scale,
-                rotation: 0,
-            });
+            setZoomFactor(1);
+            setPhotoSettings({ x: x + (width * scale) / 2, y: y + (height * scale) / 2, scale, rotation: 0 });
         };
     };
 
@@ -263,17 +224,68 @@ export default function BirthdayTemplateEditor() {
         input.click();
     };
 
+    const handleExport = () => {
+        if (!stageRef.current) return;
+        const uri = stageRef.current.toDataURL({ pixelRatio: 2 });
+        const link = document.createElement("a");
+        link.download = "birthday-card.png";
+        link.href = uri;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    };
+
+    // zoom & rotate
+    const applyZoom = (zoom) => {
+        setZoomFactor(zoom);
+        setPhotoSettings((prev) => ({ ...prev, scale: fitScale * zoom }));
+        setSelectedElement("photo");
+    };
+    const changeZoom = (value) => {
+        if (Array.isArray(value)) value = value[0];
+        const z = clamp(value ?? zoomFactor, 0.5, 2);
+        applyZoom(z);
+    };
+    const changeRotation = (value) => {
+        if (Array.isArray(value)) value = value[0];
+        setPhotoSettings((prev) => ({ ...prev, rotation: value ?? prev.rotation }));
+        setSelectedElement("photo");
+    };
+
+    // text helpers
+    const addText = () => {
+        if (!photoUrl) return;
+        const id = Date.now().toString();
+        const newText = {
+            id,
+            text: "Your text",
+            x: canvasSize / 2 - 50,
+            y: canvasSize / 2,
+            fontSize: 36,
+            fontFamily,
+            fill: "#000000",
+        };
+        setTexts((p) => [...p, newText]);
+        setActiveTextId(id);
+        setSelectedElement({ type: "text", id });
+    };
+    const updateTextItem = (updated) => setTexts((p) => p.map((t) => (t.id === updated.id ? updated : t)));
     const deleteText = (id) => {
-        setTexts((prev) => prev.filter((t) => t.id !== id));
+        setTexts((p) => p.filter((t) => t.id !== id));
         setActiveTextId(null);
         setSelectedElement(null);
     };
 
-    // ---- handlers ---- //
-
-    const handleTemplateChange = (_, id) => {
-        if (id) setSelectedTemplateId(id);
+    const handleActiveTextChange = (value) => {
+        setTexts((p) => p.map((t) => (t.id === activeTextId ? { ...t, text: value } : t)));
     };
+    const handleFontChange = (e) => {
+        const value = e.target.value;
+        setFontFamily(value);
+        setTexts((p) => p.map((t) => (t.id === activeTextId ? { ...t, fontFamily: value } : t)));
+    };
+
+    const changeTemplate = (_, id) => id && setSelectedTemplateId(id);
 
     const handleStageMouseDown = (e) => {
         const clickedEmpty = e.target === e.target.getStage();
@@ -283,97 +295,178 @@ export default function BirthdayTemplateEditor() {
         }
     };
 
-    const handleExport = () => {
-        if (!stageRef.current) return;
-        const uri = stageRef.current.toDataURL({ pixelRatio: 2 });
-
-        const link = document.createElement("a");
-        link.download = "birthday-card.png";
-        link.href = uri;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-    };
-
-    // Zoom controls (based on zoomFactor, fitScale is constant baseline)
-    const applyZoom = (zoom) => {
-        setZoomFactor(zoom);
-        setPhotoSettings((prev) => ({
-            ...prev,
-            scale: fitScale * zoom,
-        }));
-        setSelectedElement("photo");
-    };
-
-    const changeZoom = (value) => {
-        if (Array.isArray(value)) return;
-        const z = clamp(value, 0.5, 2); // 1 is center
-        applyZoom(z);
-    };
-
-    // Rotation controls
-    const changeRotation = (value) => {
-        if (Array.isArray(value)) return;
-        setPhotoSettings((prev) => ({ ...prev, rotation: value }));
-        setSelectedElement("photo");
-    };
-
-    // Text actions
-    const addText = () => {
-        if (!photoUrl) return;
-        const id = Date.now().toString();
-        const newText = {
-            id,
-            text: "Your text",
-            x: canvasSize / 2 - 100,
-            y: canvasSize / 2,
-            fontSize: 36,
-            fontFamily,
-            fill: "#000000",
-        };
-        setTexts((prev) => [...prev, newText]);
-        setActiveTextId(id);
-        setSelectedElement({ type: "text", id });
-    };
-
-    const updateTextItem = (updated) => {
-        setTexts((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
-    };
-
-    const handleActiveTextChange = (value) => {
-        setTexts((prev) =>
-            prev.map((t) => (t.id === activeTextId ? { ...t, text: value } : t))
-        );
-    };
-
-    const handleFontChange = (e) => {
-        const value = e.target.value;
-        setFontFamily(value);
-        setTexts((prev) =>
-            prev.map((t) =>
-                t.id === activeTextId ? { ...t, fontFamily: value } : t
-            )
-        );
-    };
-
-    const handleChangePhoto = () => {
+    const resetPhoto = () => {
         setPhotoUrl(null);
         setTexts([]);
         setActiveTextId(null);
         setSelectedElement(null);
         setFitScale(1);
         setZoomFactor(1);
-        setPhotoSettings({
-            x: 0,
-            y: 0,
-            scale: 1,
-            rotation: 0,
-        });
+        setPhotoSettings({ x: 0, y: 0, scale: 1, rotation: 0 });
     };
 
+    const currentTemplate = templates.find((t) => t.id === selectedTemplateId);
 
+    // ---------- UI subcomponents ---------- //
+    const TemplateControls = () => (
+        <Box>
+            <Typography variant="subtitle1" fontWeight={700} mb={1}>
+                Templates
+            </Typography>
+            <Stack spacing={1}>
+                {templates.map((t) => (
+                    <Button
+                        key={t.id}
+                        variant={t.id === selectedTemplateId ? "contained" : "outlined"}
+                        onClick={() => setSelectedTemplateId(t.id)}
+                        startIcon={<img src={t.url} alt={t.name} style={{ width: 28, height: 28, objectFit: "cover" }} />}
+                    >
+                        {t.name}
+                    </Button>
+                ))}
+            </Stack>
+        </Box>
+    );
 
-    // 2) EDITOR SCREEN
+    const ImageControls = () => (
+        <Box>
+            <Typography variant="subtitle1" fontWeight={700} mb={1}>
+                Image
+            </Typography>
+            <Stack spacing={1}>
+                <Button variant="contained" onClick={openFileSelector}>
+                    {photoUrl ? "Replace Image" : "Upload Image"}
+                </Button>
+
+                {photoUrl && (
+                    <>
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                            <Typography>Zoom</Typography>
+                            <IconButton size="small" onClick={() => changeZoom(1)}>
+                                <RestartAltIcon />
+                            </IconButton>
+                        </Stack>
+                        <Slider
+                            size="small"
+                            min={0.5}
+                            max={2}
+                            step={0.01}
+                            value={zoomFactor}
+                            onChange={(_, v) => changeZoom(v)}
+                        />
+
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                            <Typography>Rotation</Typography>
+                            <IconButton size="small" onClick={() => changeRotation(0)}>
+                                <RestartAltIcon />
+                            </IconButton>
+                        </Stack>
+                        <Slider
+                            size="small"
+                            min={-180}
+                            max={180}
+                            step={1}
+                            value={photoSettings.rotation ?? 0}
+                            onChange={(_, v) => changeRotation(v)}
+                        />
+
+                        <Button variant="outlined" color="error" onClick={resetPhoto}>
+                            Remove Photo
+                        </Button>
+                    </>
+                )}
+            </Stack>
+        </Box>
+    );
+
+    const TextControls = () => {
+        const active = texts.find((t) => t.id === activeTextId) || null;
+        const toggleStyle = (style) => {
+            if (!active) return;
+            if (style === "bold") {
+                const next = active.fontStyle === "bold" ? "normal" : "bold";
+                updateTextItem({ ...active, fontStyle: next });
+            }
+            if (style === "italic") {
+                const next = active.fontStyle === "italic" ? "normal" : "italic";
+                updateTextItem({ ...active, fontStyle: next });
+            }
+            if (style === "underline") {
+                const next = active.textDecoration === "underline" ? "" : "underline";
+                updateTextItem({ ...active, textDecoration: next });
+            }
+        };
+
+        return (
+            <Box>
+                <Stack spacing={1}>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                        <Button startIcon={<TextFieldsIcon />} variant="contained" onClick={addText}>
+                            Add Text
+                        </Button>
+                        {active && (
+                            <Button variant="outlined" color="error" onClick={() => deleteText(active.id)}>
+                                Delete
+                            </Button>
+                        )}
+                    </Stack>
+
+                    {active && (
+                        <>
+                            <TextField label="Edit" size="small" value={active.text} onChange={(e) => handleActiveTextChange(e.target.value)} />
+
+                            <Stack direction="row" spacing={1} alignItems="center">
+                                <Stack direction="row" spacing={0.5}>
+                                    <Button size="small" onClick={() => toggleStyle("bold")}>
+                                        <b>B</b>
+                                    </Button>
+                                    <Button size="small" onClick={() => toggleStyle("italic")}>
+                                        <i>I</i>
+                                    </Button>
+                                    <Button size="small" onClick={() => toggleStyle("underline")}>
+                                        <u>U</u>
+                                    </Button>
+                                </Stack>
+
+                                <input
+                                    type="color"
+                                    value={active.fill}
+                                    onChange={(e) => updateTextItem({ ...active, fill: e.target.value })}
+                                    style={{ width: 36, height: 36, border: "none", padding: 0 }}
+                                />
+
+                                <FormControl size="small" sx={{ minWidth: 120 }}>
+                                    <InputLabel>Font</InputLabel>
+                                    <Select value={active.fontFamily} label="Font" onChange={(e) => updateTextItem({ ...active, fontFamily: e.target.value })}>
+                                        <MenuItem value="Arial">Arial</MenuItem>
+                                        <MenuItem value="Roboto">Roboto</MenuItem>
+                                        <MenuItem value="Georgia">Georgia</MenuItem>
+                                        <MenuItem value="Courier New">Courier New</MenuItem>
+                                    </Select>
+                                </FormControl>
+                            </Stack>
+
+                            <Box>
+                                <Typography variant="body2" mb={1}>
+                                    Font Size
+                                </Typography>
+                                <Slider
+                                    size="small"
+                                    min={8}
+                                    max={120}
+                                    step={1}
+                                    value={active.fontSize || 36}
+                                    onChange={(_, v) => updateTextItem({ ...active, fontSize: Array.isArray(v) ? v[0] : v })}
+                                />
+                            </Box>
+                        </>
+                    )}
+                </Stack>
+            </Box>
+        );
+    };
+
+    // ---------- render ---------- //
     return (
         <Box sx={{ bgcolor: "background.default", minHeight: "100vh" }}>
             <AppBar position="static" elevation={0} color="transparent">
@@ -381,8 +474,9 @@ export default function BirthdayTemplateEditor() {
                     <Typography variant="h6" fontWeight={600}>
                         Birthday Template Editor
                     </Typography>
+
                     <Stack direction="row" spacing={1}>
-                        <Button variant="contained" onClick={handleExport}>
+                        <Button variant="contained" onClick={handleExport} disabled={!stageRef.current}>
                             Export as PNG
                         </Button>
                     </Stack>
@@ -390,96 +484,43 @@ export default function BirthdayTemplateEditor() {
             </AppBar>
 
             <Container maxWidth="xl" sx={{ py: 3 }}>
-                {/* ---------- MAIN 3 COLUMN GRID ---------- */}
                 <Grid container spacing={2}>
-
-                    {/* -------- LEFT SIDEBAR: TEMPLATE PICKER -------- */}
-                    <Grid size={{ sm: 12, md: 3 }}>
-                        <Paper
-                            sx={{
-                                p: 1,
-                                height: "fit-content",
-                                display: "flex",
-                                flexDirection: "column",
-                                gap: 1,
-                                top: { md: 90 },
-                            }}
-                        >
-
-                            <ToggleButtonGroup
-                                orientation="vertical"
-                                exclusive
-                                value={selectedTemplateId}
-                                onChange={handleTemplateChange}
-                                sx={{ width: "100%" }}
-                            >
-                                {templates.map((t) => (
-                                    <ToggleButton key={t.id} value={t.id} sx={{ justifyContent: "flex-start" }}>
-                                        <Box
-                                            component="img"
-                                            src={t.url}
-                                            alt={t.name}
-                                            sx={{
-                                                width: 30,
-                                                height: 30,
-                                                objectFit: "cover",
-                                                borderRadius: 1,
-                                                mr: 1,
-                                            }}
-                                        />
-                                        {t.name}
-                                    </ToggleButton>
-                                ))}
-                            </ToggleButtonGroup>
-                        </Paper>
-                    </Grid>
-
-
-                    {/* -------- CENTER COLUMN: CANVAS -------- */}
-                    <Grid size={{ sm: 12, md: 6 }}>
-                        <Paper
-                            ref={canvasWrapperRef}
-                            sx={{
-                                p: 1,
-                                display: "flex",
-                                justifyContent: "center",
-                            }}
-                        >
-                            <Stage
-                                width={canvasSize}
-                                height={canvasSize}
-                                ref={stageRef}
-                                onMouseDown={handleStageMouseDown}
-                                onTouchStart={handleStageMouseDown}
-                            >
+                    {/* CANVAS - right */}
+                    <Grid size={{ xs: 12, md: 6 }}>
+                        <Paper ref={canvasWrapperRef} sx={{ p: 1, display: "flex", justifyContent: "center" }}>
+                            <Stage width={canvasSize} height={canvasSize} ref={stageRef} onMouseDown={handleStageMouseDown} onTouchStart={handleStageMouseDown}>
                                 <Layer>
-                                    <EditableImage
-                                        imageUrl={photoUrl}
-                                        settings={photoSettings}
-                                        isSelected={selectedElement === "photo"}
-                                        onSelect={() => {
-                                            setSelectedElement("photo");
-                                            setActiveTextId(null);
-                                        }}
-                                        onChange={(newSettings) => setPhotoSettings(newSettings)}
-                                    />
-
-                                    {currentTemplate && (
-                                        <TemplateImage url={currentTemplate.url} size={canvasSize} />
+                                    {/* photo (bottom) */}
+                                    {photoUrl && (
+                                        <EditableImage
+                                            imageUrl={photoUrl}
+                                            settings={photoSettings}
+                                            isSelected={selectedElement === "photo"}
+                                            onSelect={() => setSelectedElement("photo")}
+                                            onChange={(s) => setPhotoSettings(s)}
+                                        />
                                     )}
 
-                                    {texts.map((item) => (
-                                        <EditableText
-                                            key={item.id}
-                                            item={item}
-                                            isSelected={
-                                                selectedElement &&
-                                                selectedElement.type === "text" &&
-                                                selectedElement.id === item.id
-                                            }
+                                    {/* template sits above photo so transparent areas reveal the photo beneath */}
+                                    {currentTemplate && (
+                                        <TemplateImage
+                                            url={currentTemplate.url}
+                                            size={canvasSize}
                                             onSelect={() => {
-                                                setSelectedElement({ type: "text", id: item.id });
-                                                setActiveTextId(item.id);
+                                                setSelectedElement("template");
+                                            }}
+                                        />
+                                    )}
+
+                                    {/* texts (top) */}
+                                    {texts.map((t) => (
+                                        <EditableText
+                                            key={t.id}
+                                            item={t}
+                                            isSelected={selectedElement && selectedElement.type === "text" && selectedElement.id === t.id}
+                                            onSelect={() => {
+                                                setSelectedElement({ type: "text", id: t.id });
+                                                setActiveTextId(t.id);
                                             }}
                                             onChange={updateTextItem}
                                         />
@@ -489,211 +530,24 @@ export default function BirthdayTemplateEditor() {
                         </Paper>
                     </Grid>
 
-                    {/* -------- RIGHT SIDEBAR: EDITING CONTROLLER -------- */}
-                    <Grid size={{ sm: 12, md: 3 }}>
-                        <Paper
-                            sx={{
-                                p: 1,
-                                height: "fit-content",
-                                top: { md: 90 },
-                                display: "flex",
-                                flexDirection: "column",
-                                gap: 1,
-                            }}
-                        >
+                    {/* CONTROLLER - right */}
+                    <Grid size={{ xs: 12, md: 6 }}>
+                        <Paper sx={{ p: 1, display: "flex", gap: 1, flexDirection: "column" }}>
+                            <Tabs value={activeTab} onChange={(e, v) => setActiveTab(v)} variant="fullWidth">
+                                <Tab label="Template" value="template" />
+                                <Tab label="Image" value="image" />
+                                <Tab label="Text" value="text" />
+                            </Tabs>
 
-                            {/* ----------------------- */}
-
-                            <Stack spacing={2}>
-                                {/* Upload / Update Photo */}
-                                <Button
-                                    variant="contained"
-                                    onClick={openFileSelector}
-                                >
-                                    {photoUrl ? "Update Photo" : "Upload Photo"}
-                                </Button>
-
-                                {/* Add Text */}
-                                {photoUrl && (
-                                    <Button
-                                        variant="outlined"
-                                        onClick={addText}
-                                        startIcon={<TextFieldsIcon />}
-                                    >
-                                        Add Text
-                                    </Button>
-                                )}
-                            </Stack>
-
-
-                            {isPhotoSelected && (
-                                <>
-                                    <Typography variant="subtitle2" fontWeight={600}>
-                                        Image Controls
-                                    </Typography>
-
-                                    <Box>
-                                        <Stack direction="row" alignItems="center" spacing={1}>
-                                            <Typography variant="body2" mb={1} sx={{ flexGrow: 1 }}>
-                                                Zoom
-                                            </Typography>
-
-                                            {/* Reset Zoom */}
-                                            <IconButton
-                                                size="small"
-                                                onClick={() => changeZoom(1)}
-                                            >
-                                                <RestartAltIcon fontSize="small" />
-                                            </IconButton>
-                                        </Stack>
-                                        <Slider
-                                            size="small"
-                                            min={0.5}
-                                            max={2}
-                                            step={0.05}
-                                            value={zoomFactor}
-                                            onChange={(_, v) => changeZoom(v)}
-                                        />
-                                    </Box>
-
-                                    <Box>
-                                        <Stack direction="row" alignItems="center" spacing={1}>
-                                            <Typography variant="body2" mb={1} sx={{ flexGrow: 1 }}>
-                                                Rotation
-                                            </Typography>
-
-                                            {/* Reset Rotation */}
-                                            <IconButton
-                                                size="small"
-                                                onClick={() => changeRotation(0)}
-                                            >
-                                                <RestartAltIcon fontSize="small" />
-                                            </IconButton>
-                                        </Stack>
-                                        <Slider
-                                            size="small"
-                                            min={-180}
-                                            max={180}
-                                            step={1}
-                                            value={photoSettings.rotation}
-                                            onChange={(_, v) => changeRotation(v)}
-                                        />
-                                    </Box>
-                                </>
-                            )}
-
-                            {isTextSelected && (
-
-                                <>
-                                    <Button
-                                        color="error"
-                                        variant="outlined"
-                                        onClick={() => deleteText(activeTextId)}
-                                    >
-                                        Delete Text
-                                    </Button>
-                                    <Typography variant="subtitle2" fontWeight={600}>Text Controls</Typography>
-
-                                    <TextField
-                                        label="Edit Text"
-                                        size="small"
-                                        value={texts.find((t) => t.id === activeTextId)?.text || ""}
-                                        onChange={(e) => handleActiveTextChange(e.target.value)}
-                                    />
-
-                                    <Stack direction="row" spacing={1}>
-                                        <ToggleButtonGroup size="small">
-                                            <ToggleButton
-                                                value="bold"
-                                                onClick={() =>
-                                                    updateTextItem({
-                                                        ...texts.find((t) => t.id === activeTextId),
-                                                        fontStyle: "bold",
-                                                    })
-                                                }
-                                            >
-                                                <b>B</b>
-                                            </ToggleButton>
-                                            <ToggleButton
-                                                value="italic"
-                                                onClick={() =>
-                                                    updateTextItem({
-                                                        ...texts.find((t) => t.id === activeTextId),
-                                                        fontStyle: "italic",
-                                                    })
-                                                }
-                                            >
-                                                <i>I</i>
-                                            </ToggleButton>
-                                            <ToggleButton
-                                                value="underline"
-                                                onClick={() =>
-                                                    updateTextItem({
-                                                        ...texts.find((t) => t.id === activeTextId),
-                                                        textDecoration: "underline",
-                                                    })
-                                                }
-                                            >
-                                                <u>U</u>
-                                            </ToggleButton>
-                                        </ToggleButtonGroup>
-
-                                        <input
-                                            type="color"
-                                            style={{
-                                                width: 40,
-                                                height: 40,
-                                                border: "none",
-                                                background: "transparent",
-                                                padding: 0,
-                                            }}
-                                            value={texts.find((t) => t.id === activeTextId)?.fill || "#000"}
-                                            onChange={(e) =>
-                                                updateTextItem({
-                                                    ...texts.find((t) => t.id === activeTextId),
-                                                    fill: e.target.value,
-                                                })
-                                            }
-                                        />
-                                    </Stack>
-
-                                    <FormControl size="small">
-                                        <InputLabel>Font</InputLabel>
-                                        <Select value={fontFamily} label="Font" onChange={handleFontChange}>
-                                            <MenuItem value="Arial">Arial</MenuItem>
-                                            <MenuItem value="Roboto">Roboto</MenuItem>
-                                            <MenuItem value="Georgia">Georgia</MenuItem>
-                                            <MenuItem value="Courier New">Courier New</MenuItem>
-                                        </Select>
-                                    </FormControl>
-
-                                    <Box>
-                                        <Typography variant="body2" mb={1}>Font Size</Typography>
-                                        <Slider
-                                            size="small"
-                                            min={10}
-                                            max={100}
-                                            step={1}
-                                            value={texts.find((t) => t.id === activeTextId)?.fontSize || 32}
-                                            onChange={(_, v) =>
-                                                updateTextItem({
-                                                    ...texts.find((t) => t.id === activeTextId),
-                                                    fontSize: v,
-                                                })
-                                            }
-                                        />
-                                    </Box>
-
-
-                                </>
-                            )}
+                            <Box sx={{ mt: 1 }}>
+                                {activeTab === "template" && <TemplateControls />}
+                                {activeTab === "image" && <ImageControls />}
+                                {activeTab === "text" && <TextControls />}
+                            </Box>
                         </Paper>
                     </Grid>
-
                 </Grid>
-
             </Container>
         </Box>
     );
-    ;
 }
