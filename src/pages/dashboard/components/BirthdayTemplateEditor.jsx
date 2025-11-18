@@ -28,10 +28,11 @@ import useImage from "use-image";
 
 import temp1 from "../../../assets/templates/temp1.png";
 import temp2 from "../../../assets/templates/temp2.png";
+import temp3 from "../../../assets/templates/temp3.png";
 
 // ---- constants & helpers ---- //
 
-const DEFAULT_CANVAS_SIZE = 600;
+const DEFAULT_CANVAS_SIZE = 300;
 
 const clamp = (val, min, max) => Math.min(max, Math.max(min, val));
 
@@ -145,8 +146,9 @@ const TemplateImage = ({ url, size }) => {
 // ---- templates ---- //
 
 const templates = [
-    { id: "t2", name: "Template 2", url: temp1 },
-    { id: "t3", name: "Template 3", url: temp2 },
+    { id: "t1", name: "Template 1", url: temp1 },
+    { id: "t2", name: "Template 2", url: temp2 },
+    { id: "t3", name: "Template 3", url: temp3 },
 ];
 
 // ---- main component ---- //
