@@ -1,5 +1,8 @@
 import { Box, Button, FormControl, InputLabel, MenuItem, Select, Slider, Stack, TextField, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
 import TextFieldsIcon from "@mui/icons-material/TextFields";
+import FormatBoldIcon from '@mui/icons-material/FormatBold';
+import FormatItalicIcon from '@mui/icons-material/FormatItalic';
+import FormatUnderlinedIcon from '@mui/icons-material/FormatUnderlined';
 
 
 export default function TextTab({ addText, photoUrl, isTextSelected, texts, activeTextId, handleActiveTextChange, setTexts, fontFamily, handleFontChange, updateTextItem, deleteText }) {
@@ -49,10 +52,6 @@ export default function TextTab({ addText, photoUrl, isTextSelected, texts, acti
                             display: "flex",
                             alignItems: "center",
                             gap: 1.5,
-                            p: 1,
-                            borderRadius: 1.5,
-                            border: "1px solid #e0e0e0",
-                            bgcolor: "#fff",
                         }}
                     >
                         <ToggleButtonGroup size="small" exclusive={false}>
