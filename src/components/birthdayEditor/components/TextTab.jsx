@@ -11,11 +11,7 @@ export default function TextTab({ addText, photoUrl, isTextSelected, texts, acti
             sx={{
                 display: "flex",
                 flexDirection: "column",
-                gap: 2,
-                p: 2,
-                borderRadius: 2,
-                bgcolor: "#fafafa",
-                border: "1px solid #e0e0e0",
+                gap: 2
             }}
         >
             <Typography variant="subtitle2" fontWeight={700} sx={{ textTransform: "uppercase", fontSize: 13 }}>

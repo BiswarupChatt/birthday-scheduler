@@ -6,14 +6,7 @@ import { Stack, Typography, Button, IconButton, Slider, Box, Paper, Divider } fr
 export default function ImageTab({ openFileSelector, photoUrl, handleChangePhoto, nudgeZoom, isPhotoSelected, zoomFactor, changeZoom, changeRotation, photoSettings }) {
     return (
         <Box>
-            <Paper
-                elevation={2}
-                sx={{
-                    p: 2,
-                    borderRadius: 2,
-                    bgcolor: "#fafafa",
-                }}
-            >
+       
                 <Typography
                     variant="subtitle1"
                     fontWeight={700}
@@ -113,7 +106,7 @@ export default function ImageTab({ openFileSelector, photoUrl, handleChangePhoto
                         disabled={!photoUrl || !isPhotoSelected}
                     />
                 </Box>
-            </Paper>
+            
         </Box>
 
     )
