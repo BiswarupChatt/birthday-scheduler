@@ -290,13 +290,6 @@ export default function BirthdayEditor() {
                     </Typography>
                     <Stack direction="row" spacing={1}>
                         <Button
-                            variant="outlined"
-                            onClick={handleChangePhoto}
-                            disabled={!photoUrl}
-                        >
-                            Change Photo
-                        </Button>
-                        <Button
                             variant="contained"
                             onClick={handleExport}
                             disabled={!photoUrl}

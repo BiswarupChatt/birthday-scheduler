@@ -23,16 +23,15 @@ export default function ImageTab({ openFileSelector, photoUrl, handleChangePhoto
                 </Typography>
 
                 {/* Upload Controls */}
-                <Stack spacing={1.5} sx={{ mb: 2 }}>
-                    <Typography variant="body2" fontWeight={600}>
-                        Manage Photo
-                    </Typography>
+                <Box sx={{ mb: 2 }}>
 
-                    <Stack direction="row" spacing={1} flexWrap="wrap">
+
+                    <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                         <Button
                             variant="contained"
                             size="small"
                             onClick={openFileSelector}
+                            sx={{ mr: 2 }}
                         >
                             {photoUrl ? "Replace Photo" : "Upload Photo"}
                         </Button>
@@ -45,13 +44,13 @@ export default function ImageTab({ openFileSelector, photoUrl, handleChangePhoto
                         >
                             Clear Photo
                         </Button>
-                    </Stack>
-                </Stack>
+                    </Box>
+                </Box>
 
                 <Divider sx={{ my: 2 }} />
 
                 {/* Zoom */}
-                <Stack spacing={1.3} sx={{ mb: 2 }}>
+                <Box sx={{ mb: 2 }}>
                     <Stack direction="row" justifyContent="space-between" alignItems="center">
                         <Typography variant="body2" fontWeight={600}>
                             Zoom
@@ -84,12 +83,12 @@ export default function ImageTab({ openFileSelector, photoUrl, handleChangePhoto
                         onChange={(_, v) => changeZoom(v)}
                         disabled={!photoUrl || !isPhotoSelected}
                     />
-                </Stack>
+                </Box>
 
                 <Divider sx={{ my: 2 }} />
 
                 {/* Rotation */}
-                <Stack spacing={1.3}>
+                <Box>
                     <Stack direction="row" justifyContent="space-between" alignItems="center">
                         <Typography variant="body2" fontWeight={600}>
                             Rotation
@@ -113,7 +112,7 @@ export default function ImageTab({ openFileSelector, photoUrl, handleChangePhoto
                         onChange={(_, v) => changeRotation(v)}
                         disabled={!photoUrl || !isPhotoSelected}
                     />
-                </Stack>
+                </Box>
             </Paper>
         </Box>
 
