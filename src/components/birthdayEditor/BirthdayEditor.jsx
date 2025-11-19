@@ -3,27 +3,13 @@ import {
     AppBar,
     Box,
     Button,
-    Container,
-    FormControl,
-    IconButton,
-    InputLabel,
-    MenuItem,
-    Paper,
-    Select,
-    Slider,
     Stack,
     Tab,
     Tabs,
-    TextField,
-    ToggleButton,
-    ToggleButtonGroup,
     Toolbar,
     Typography,
+    Grid
 } from "@mui/material";
-import ZoomInIcon from "@mui/icons-material/ZoomIn";
-import ZoomOutIcon from "@mui/icons-material/ZoomOut";
-import { RestartAlt } from "@mui/icons-material";
-import TextFieldsIcon from "@mui/icons-material/TextFields";
 
 import {
     Stage,
@@ -38,10 +24,13 @@ import EditableImage from "./components/EditableImage";
 import EditableText from "./components/EditableText";
 import TemplateImage from "./components/TemplateImage";
 import TemplateTab from "./components/TemplateTab";
+import ImageTab from "./components/ImageTab";
+import TextTab from "./components/TextTab";
+
 
 // ---- constants & helpers ---- //
 
-const DEFAULT_CANVAS_SIZE = 300;
+const DEFAULT_CANVAS_SIZE = 350;
 
 const clamp = (val, min, max) => Math.min(max, Math.max(min, val));
 
@@ -318,433 +307,160 @@ export default function BirthdayEditor() {
                 </Toolbar>
             </AppBar>
 
-            <Container maxWidth="lg" sx={{ py: 3 }}>
-                <Stack
-                    direction={{ xs: "column", md: "row" }}
-                    spacing={3}
-                    alignItems="flex-start"
-                >
+            <Box sx={{ m: 2 }}>
+
+                <Grid container spacing={2}>
                     {/* LEFT: CANVAS AREA */}
-                    <Paper
-                        elevation={3}
-                        ref={canvasWrapperRef}
-                        onDrop={handleDrop}
-                        onDragOver={handleDragOver}
-                        sx={{
-                            p: 1,
-                            flex: { xs: "0 0 auto", md: "0 0 360px" },
-                            display: "flex",
-                            justifyContent: "center",
-                            alignItems: "center",
-                            minHeight: DEFAULT_CANVAS_SIZE + 32,
-                            position: "relative",
-                        }}
-                    >
-
-                        <Stage
-                            width={canvasSize}
-                            height={canvasSize}
-                            ref={stageRef}
-                            onMouseDown={handleStageMouseDown}
-                            onTouchStart={handleStageMouseDown}
+                    <Grid size={{ xs: 12, md: 7 }}>
+                        <Box
+                            ref={canvasWrapperRef}
+                            onDrop={handleDrop}
+                            onDragOver={handleDragOver}
+                            sx={{
+                                p: 1,
+                                borderRadius: 3,
+                                flex: { xs: "0 0 auto", md: "0 0 360px" },
+                                display: "flex",
+                                justifyContent: "center",
+                                alignItems: "center",
+                                minHeight: DEFAULT_CANVAS_SIZE + 32,
+                                position: "relative",
+                                bgcolor: "background.paper"
+                            }}
                         >
-                            <Layer>
-                                {/* Base photo */}
-                                {photoUrl && (
-                                    <EditableImage
-                                        imageUrl={photoUrl}
-                                        settings={photoSettings}
-                                        isSelected={selectedElement === "photo"}
-                                        onSelect={() => {
-                                            setSelectedElement("photo");
-                                            setActiveTextId(null);
-                                        }}
-                                        onChange={(newSettings) =>
-                                            setPhotoSettings(newSettings)
-                                        }
-                                    />
-                                )}
 
-                                {/* Template overlay */}
-                                {currentTemplate && (
-                                    <TemplateImage
-                                        url={currentTemplate.url}
-                                        size={canvasSize}
-                                    />
-                                )}
-
-                                {/* Texts on top */}
-                                {texts.map((item) => (
-                                    <EditableText
-                                        key={item.id}
-                                        item={item}
-                                        isSelected={
-                                            selectedElement &&
-                                            selectedElement.type === "text" &&
-                                            selectedElement.id === item.id
-                                        }
-                                        onSelect={() => {
-                                            setSelectedElement({
-                                                type: "text",
-                                                id: item.id,
-                                            });
-                                            setActiveTextId(item.id);
-                                        }}
-                                        onChange={updateTextItem}
-                                    />
-                                ))}
-                            </Layer>
-                        </Stage>
-                    </Paper>
-
-                    {/* RIGHT: CONTROLLER TABS */}
-                    <Paper
-                        elevation={3}
-                        sx={{
-                            flex: 1,
-                            borderRadius: 3,
-                            p: 2,
-                            minWidth: 0,
-                            display: "flex",
-                            flexDirection: "column",
-                        }}
-                    >
-                        <Tabs
-                            value={activeTab}
-                            onChange={handleTabChange}
-                            variant="fullWidth"
-                            sx={{ mb: 2 }}
-                        >
-                            <Tab label="Templates" value="templates" />
-                            <Tab label="Image" value="image" />
-                            <Tab label="Text" value="text" />
-                        </Tabs>
-
-                        {/* TEMPLATES TAB */}
-                        {activeTab === "templates" && (
-                            <>
-                                <TemplateTab
-                                    selectedTemplateId={selectedTemplateId}
-                                    handleTemplateChange={handleTemplateChange}
-                                    templates={templates}
-                                />
-                            </>
-                        )}
-
-
-                        {/* IMAGE TAB */}
-                        {activeTab === "image" && (
-                            <Stack spacing={2}>
-                                <Typography
-                                    variant="subtitle2"
-                                    fontWeight={600}
-                                >
-                                    Image Controls
-                                </Typography>
-
-                                {/* Upload / change */}
-                                <Stack
-                                    direction="row"
-                                    spacing={1}
-                                    flexWrap="wrap"
-                                    alignItems="center"
-                                >
-                                    <Button
-                                        variant="contained"
-                                        size="small"
-                                        onClick={openFileSelector}
-                                    >
-                                        {photoUrl ? "Replace Photo" : "Upload Photo"}
-                                    </Button>
-                                    <Button
-                                        variant="outlined"
-                                        size="small"
-                                        onClick={handleChangePhoto}
-                                        disabled={!photoUrl}
-                                    >
-                                        Clear Photo
-                                    </Button>
-                                </Stack>
-
-                                {/* Zoom */}
-                                <Box>
-                                    <Stack
-                                        direction="row"
-                                        justifyContent="space-between"
-                                        alignItems="center"
-                                        mb={1}
-                                    >
-                                        <Typography
-                                            variant="body2"
-                                            fontWeight={500}
-                                        >
-                                            Zoom
-                                        </Typography>
-                                        <Stack direction="row" spacing={1}>
-                                            <IconButton
-                                                size="small"
-                                                onClick={() => nudgeZoom(-0.1)}
-                                                disabled={!photoUrl || !isPhotoSelected}
-                                            >
-                                                <ZoomOutIcon fontSize="small" />
-                                            </IconButton>
-                                            <IconButton
-                                                size="small"
-                                                onClick={() => nudgeZoom(0.1)}
-                                                disabled={!photoUrl || !isPhotoSelected}
-                                            >
-                                                <ZoomInIcon fontSize="small" />
-                                            </IconButton>
-                                        </Stack>
-                                    </Stack>
-                                    <Slider
-                                        size="small"
-                                        min={0.5}
-                                        max={2}
-                                        step={0.05}
-                                        value={zoomFactor}
-                                        onChange={(_, v) => changeZoom(v)}
-                                        disabled={!photoUrl || !isPhotoSelected}
-                                    />
-                                    <Typography
-                                        variant="caption"
-                                        color="text.secondary"
-                                    >
-                                        Select the image on canvas to enable zoom controls.
-                                    </Typography>
-                                </Box>
-
-                                {/* Rotation */}
-                                <Box>
-                                    <Stack
-                                        direction="row"
-                                        justifyContent="space-between"
-                                        alignItems="center"
-                                        mb={1}
-                                    >
-                                        <Typography
-                                            variant="body2"
-                                            fontWeight={500}
-                                        >
-                                            Rotation
-                                        </Typography>
-                                        <IconButton
-                                            size="small"
-                                            onClick={() => changeRotation(0)}
-                                            disabled={!photoUrl || !isPhotoSelected}
-                                        >
-                                            <RestartAlt fontSize="small" />
-                                        </IconButton>
-                                    </Stack>
-                                    <Slider
-                                        size="small"
-                                        min={-180}
-                                        max={180}
-                                        step={1}
-                                        value={photoSettings.rotation}
-                                        onChange={(_, v) => changeRotation(v)}
-                                        disabled={!photoUrl || !isPhotoSelected}
-                                    />
-                                    <Typography
-                                        variant="caption"
-                                        color="text.secondary"
-                                    >
-                                        Click on the photo inside the canvas to select it,
-                                        then rotate as needed.
-                                    </Typography>
-                                </Box>
-                            </Stack>
-                        )}
-
-                        {/* TEXT TAB */}
-                        {activeTab === "text" && (
-                            <Stack spacing={2}>
-                                <Typography
-                                    variant="subtitle2"
-                                    fontWeight={600}
-                                >
-                                    Text Controls
-                                </Typography>
-
-                                {/* Add Text */}
-                                <Button
-                                    variant="outlined"
-                                    onClick={addText}
-                                    startIcon={<TextFieldsIcon />}
-                                    disabled={!photoUrl}
-                                >
-                                    Add Text
-                                </Button>
-
-                                {isTextSelected && (
-                                    <>
-                                        {/* Edit Text */}
-                                        <TextField
-                                            label="Edit Text"
-                                            size="small"
-                                            value={
-                                                texts.find(
-                                                    (t) => t.id === activeTextId
-                                                )?.text || ""
-                                            }
-                                            onChange={(e) =>
-                                                handleActiveTextChange(
-                                                    e.target.value
-                                                )
+                            <Stage
+                                width={canvasSize}
+                                height={canvasSize}
+                                ref={stageRef}
+                                onMouseDown={handleStageMouseDown}
+                                onTouchStart={handleStageMouseDown}
+                            >
+                                <Layer>
+                                    {/* Base photo */}
+                                    {photoUrl && (
+                                        <EditableImage
+                                            imageUrl={photoUrl}
+                                            settings={photoSettings}
+                                            isSelected={selectedElement === "photo"}
+                                            onSelect={() => {
+                                                setSelectedElement("photo");
+                                                setActiveTextId(null);
+                                            }}
+                                            onChange={(newSettings) =>
+                                                setPhotoSettings(newSettings)
                                             }
                                         />
+                                    )}
 
-                                        {/* Text styling toolbar */}
-                                        <Stack direction="row" spacing={1}>
-                                            <ToggleButtonGroup size="small">
-                                                <ToggleButton
-                                                    value="bold"
-                                                    selected={texts.find(t => t.id === activeTextId)?.fontWeight === "bold"}
-                                                    onClick={() => {
-                                                        setTexts(prev =>
-                                                            prev.map(t =>
-                                                                t.id === activeTextId
-                                                                    ? { ...t, fontWeight: t.fontWeight === "bold" ? "normal" : "bold" }
-                                                                    : t
-                                                            )
-                                                        );
-                                                    }}
-                                                >
-                                                    <b>B</b>
-                                                </ToggleButton>
+                                    {/* Template overlay */}
+                                    {currentTemplate && (
+                                        <TemplateImage
+                                            url={currentTemplate.url}
+                                            size={canvasSize}
+                                        />
+                                    )}
 
-                                                <ToggleButton
-                                                    value="italic"
-                                                    selected={texts.find(t => t.id === activeTextId)?.fontStyle === "italic"}
-                                                    onClick={() => {
-                                                        setTexts(prev =>
-                                                            prev.map(t =>
-                                                                t.id === activeTextId
-                                                                    ? { ...t, fontStyle: t.fontStyle === "italic" ? "normal" : "italic" }
-                                                                    : t
-                                                            )
-                                                        );
-                                                    }}
-                                                >
-                                                    <i>I</i>
-                                                </ToggleButton>
-
-                                                <ToggleButton
-                                                    value="underline"
-                                                    selected={texts.find(t => t.id === activeTextId)?.textDecoration === "underline"}
-                                                    onClick={() => {
-                                                        setTexts(prev =>
-                                                            prev.map(t =>
-                                                                t.id === activeTextId
-                                                                    ? { ...t, textDecoration: t.textDecoration === "underline" ? "none" : "underline" }
-                                                                    : t
-                                                            )
-                                                        );
-                                                    }}
-                                                >
-                                                    <u>U</u>
-                                                </ToggleButton>
-                                            </ToggleButtonGroup>
-
-                                            <input
-                                                type="color"
-                                                style={{ width: 40, height: 40, border: "none", background: "transparent", padding: 0 }}
-                                                value={texts.find(t => t.id === activeTextId)?.fill || "#000"}
-                                                onChange={(e) => {
-                                                    const color = e.target.value;
-                                                    setTexts(prev => prev.map(t => t.id === activeTextId ? { ...t, fill: color } : t));
-                                                }}
-                                            />
-                                        </Stack>
-
-
-
-                                        {/* Font Family */}
-                                        <FormControl size="small">
-                                            <InputLabel>Font</InputLabel>
-                                            <Select
-                                                value={fontFamily}
-                                                label="Font"
-                                                onChange={handleFontChange}
-                                            >
-                                                <MenuItem value="Arial">
-                                                    Arial
-                                                </MenuItem>
-                                                <MenuItem value="Roboto">
-                                                    Roboto
-                                                </MenuItem>
-                                                <MenuItem value="Georgia">
-                                                    Georgia
-                                                </MenuItem>
-                                                <MenuItem value="Courier New">
-                                                    Courier New
-                                                </MenuItem>
-                                            </Select>
-                                        </FormControl>
-
-                                        {/* Font size slider */}
-                                        <Box>
-                                            <Typography
-                                                variant="body2"
-                                                fontWeight={500}
-                                                mb={1}
-                                            >
-                                                Font Size
-                                            </Typography>
-                                            <Slider
-                                                size="small"
-                                                min={10}
-                                                max={100}
-                                                step={1}
-                                                value={
-                                                    texts.find(
-                                                        (t) =>
-                                                            t.id ===
-                                                            activeTextId
-                                                    )?.fontSize || 32
-                                                }
-                                                onChange={(_, v) =>
-                                                    updateTextItem({
-                                                        ...texts.find(
-                                                            (t) =>
-                                                                t.id ===
-                                                                activeTextId
-                                                        ),
-                                                        fontSize: v,
-                                                    })
-                                                }
-                                            />
-                                        </Box>
-
-                                        {/* DELETE TEXT */}
-                                        <Button
-                                            color="error"
-                                            variant="outlined"
-                                            onClick={() =>
-                                                deleteText(activeTextId)
+                                    {/* Texts on top */}
+                                    {texts.map((item) => (
+                                        <EditableText
+                                            key={item.id}
+                                            item={item}
+                                            isSelected={
+                                                selectedElement &&
+                                                selectedElement.type === "text" &&
+                                                selectedElement.id === item.id
                                             }
-                                        >
-                                            Delete Text
-                                        </Button>
-                                    </>
-                                )}
+                                            onSelect={() => {
+                                                setSelectedElement({
+                                                    type: "text",
+                                                    id: item.id,
+                                                });
+                                                setActiveTextId(item.id);
+                                            }}
+                                            onChange={updateTextItem}
+                                        />
+                                    ))}
+                                </Layer>
+                            </Stage>
+                        </Box>
+                    </Grid>
 
-                                {!isTextSelected && (
-                                    <Typography
-                                        variant="caption"
-                                        color="text.secondary"
-                                    >
-                                        Click on any text in the canvas to edit
-                                        its content and style.
-                                    </Typography>
-                                )}
-                            </Stack>
-                        )}
-                    </Paper>
-                </Stack>
-            </Container>
+                    {/* RIGHT: CONTROLLER TABS */}
+                    <Grid size={{ xs: 12, md: 5 }}  >
+                        <Box
+                            sx={{
+                                flex: 1,
+                                borderRadius: 3,
+                                p: 2,
+                                minWidth: 0,
+                                display: "flex",
+                                flexDirection: "column",
+                                bgcolor: "background.paper"
+                            }}
+                        >
+                            <Tabs
+                                value={activeTab}
+                                onChange={handleTabChange}
+                                variant="fullWidth"
+                                sx={{ mb: 2 }}
+                            >
+                                <Tab label="Templates" value="templates" />
+                                <Tab label="Image" value="image" />
+                                <Tab label="Text" value="text" />
+                            </Tabs>
+
+                            {/* TEMPLATES TAB */}
+                            {activeTab === "templates" && (
+                                <>
+                                    <TemplateTab
+                                        selectedTemplateId={selectedTemplateId}
+                                        handleTemplateChange={handleTemplateChange}
+                                        templates={templates}
+                                    />
+                                </>
+                            )}
+
+                            {/* IMAGE TAB */}
+                            {activeTab === "image" && (
+                                < ImageTab
+                                    openFileSelector={openFileSelector}
+                                    photoUrl={photoUrl}
+                                    handleChangePhoto={handleChangePhoto}
+                                    nudgeZoom={nudgeZoom}
+                                    isPhotoSelected={isPhotoSelected}
+                                    zoomFactor={zoomFactor}
+                                    changeZoom={changeZoom}
+                                    changeRotation={changeRotation}
+                                    photoSettings={photoSettings}
+                                />
+                            )}
+
+                            {/* TEXT TAB */}
+                            {activeTab === "text" && (
+                                < TextTab
+                                    addText={addText}
+                                    photoUrl={photoUrl}
+                                    isTextSelected={isTextSelected}
+                                    texts={texts}
+                                    activeTextId={activeTextId}
+                                    handleActiveTextChange={handleActiveTextChange}
+                                    setTexts={setTexts}
+                                    fontFamily={fontFamily}
+                                    handleFontChange={handleFontChange}
+                                    updateTextItem={updateTextItem}
+                                    deleteText={deleteText}
+                                />
+                            )}
+                        </Box>
+                    </Grid>
+                </Grid>
+            </Box>
+
         </Box>
     );
 }
+
+
 
 

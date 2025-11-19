@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import {
     Text as KonvaText,
     Transformer,

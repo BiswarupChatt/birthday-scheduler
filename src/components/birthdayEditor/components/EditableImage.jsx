@@ -2,6 +2,7 @@ import {
     Image as KonvaImage,
     Text as KonvaText,
 } from "react-konva";
+import useImage from "use-image";
 
 
 export default function EditableImage({ imageUrl, settings, isSelected, onSelect, onChange }) {
