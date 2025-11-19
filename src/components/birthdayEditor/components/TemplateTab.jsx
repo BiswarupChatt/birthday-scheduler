@@ -1,7 +1,17 @@
-import { Box, ToggleButton, ToggleButtonGroup, Typography } from "@mui/material";
+import {
+    Box,
+    ToggleButton,
+    ToggleButtonGroup,
+    Typography
+} from "@mui/material";
 
+import InsertPhotoIcon from "@mui/icons-material/InsertPhoto"; // <-- add this
 
-export default function TemplateTab({ selectedTemplateId, handleTemplateChange, templates }) {
+export default function TemplateTab({
+    selectedTemplateId,
+    handleTemplateChange,
+    templates
+}) {
     return (
         <Box>
             <Typography
@@ -13,11 +23,11 @@ export default function TemplateTab({ selectedTemplateId, handleTemplateChange, 
             </Typography>
 
             <ToggleButtonGroup
-                orientation="vertical" // <-- MAKE TEMPLATES VERTICAL
+                orientation="vertical"
                 exclusive
                 value={selectedTemplateId}
                 onChange={handleTemplateChange}
-                sx={{ width: "100%" }} // <-- optional for full width
+                sx={{ width: "100%" }}
             >
                 {templates.map((t) => (
                     <ToggleButton
@@ -25,16 +35,34 @@ export default function TemplateTab({ selectedTemplateId, handleTemplateChange, 
                         value={t.id}
                         sx={{ justifyContent: "flex-start", gap: 1 }}
                     >
-                        <Box
-                            component="img"
-                            src={t.url}
-                            alt={t.name}
-                            sx={{
-                                width: 24,
-                                height: 24,
-                                objectFit: "cover",
-                                borderRadius: 1,
-                            }} />
+                        {/* --- THUMBNAIL / ICON LOGIC --- */}
+                        {t.url ? (
+                            <Box
+                                component="img"
+                                src={t.url}
+                                alt={t.name}
+                                sx={{
+                                    width: 24,
+                                    height: 24,
+                                    objectFit: "cover",
+                                    borderRadius: 1,
+                                }}
+                            />
+                        ) : (
+                            <Box
+                                sx={{
+                                    width: 24,
+                                    height: 24,
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    border: "1px dashed #888",
+                                    borderRadius: 1,
+                                }}
+                            >
+                                <InsertPhotoIcon fontSize="small" sx={{ opacity: 0.7 }} />
+                            </Box>
+                        )}
                         {t.name}
                     </ToggleButton>
                 ))}
@@ -44,8 +72,7 @@ export default function TemplateTab({ selectedTemplateId, handleTemplateChange, 
                 variant="caption"
                 sx={{ mt: 2, display: "block", color: "text.secondary" }}
             >
-                Templates sit on top of your photo. You can still move
-                and resize the image underneath.
+                Templates appear above your uploaded photo. Blank means no overlay.
             </Typography>
         </Box>
     );

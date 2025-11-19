@@ -45,14 +45,14 @@ const fitImageToCanvas = (imgWidth, imgHeight, boxSize) => {
     return { scale, x, y };
 };
 
-// ---- templates ---- //
 
 const templates = [
+    { id: "blank", name: "Blank", url: null },
     { id: "t1", name: "Template 1", url: temp1 },
     { id: "t2", name: "Template 2", url: temp2 },
     { id: "t3", name: "Template 3", url: temp3 },
 ];
-// ---- main component ---- //
+
 
 export default function BirthdayEditor() {
     const stageRef = useRef();
@@ -86,8 +86,6 @@ export default function BirthdayEditor() {
 
     const currentTemplate = templates.find((t) => t.id === selectedTemplateId);
 
-    // ---- responsive canvas size ---- //
-
     useEffect(() => {
         const handleResize = () => {
             if (!canvasWrapperRef.current) {
@@ -104,8 +102,6 @@ export default function BirthdayEditor() {
         window.addEventListener("resize", handleResize);
         return () => window.removeEventListener("resize", handleResize);
     }, []);
-
-    // ---- helpers inside component ---- //
 
     const loadImageFromFile = (file) => {
         if (!file) return;
@@ -318,7 +314,7 @@ export default function BirthdayEditor() {
                                 alignItems: "center",
                                 minHeight: DEFAULT_CANVAS_SIZE + 32,
                                 position: "relative",
-                                bgcolor: "background.paper"
+                                bgcolor: "background.paper",
                             }}
                         >
 
@@ -328,6 +324,9 @@ export default function BirthdayEditor() {
                                 ref={stageRef}
                                 onMouseDown={handleStageMouseDown}
                                 onTouchStart={handleStageMouseDown}
+                                style={{
+                                    border: "1px dashed grey"
+                                }}
                             >
                                 <Layer>
                                     {/* Base photo */}
