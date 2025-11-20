@@ -1,13 +1,9 @@
 import React, { useRef, useState, useEffect } from "react";
 import {
-    AppBar,
     Box,
     Button,
-    Stack,
     Tab,
     Tabs,
-    Toolbar,
-    Typography,
     Grid,
     TextField
 } from "@mui/material";
@@ -28,9 +24,6 @@ import TemplateTab from "./components/TemplateTab";
 import ImageTab from "./components/ImageTab";
 import TextTab from "./components/TextTab";
 
-
-// ---- constants & helpers ---- //
-
 const DEFAULT_CANVAS_SIZE = 350;
 
 const clamp = (val, min, max) => Math.min(max, Math.max(min, val));
@@ -46,7 +39,6 @@ const fitImageToCanvas = (imgWidth, imgHeight, boxSize) => {
     return { scale, x, y };
 };
 
-
 const templates = [
     { id: "blank", name: "Blank", url: null },
     { id: "t1", name: "Template 1", url: temp1 },
@@ -55,7 +47,7 @@ const templates = [
 ];
 
 
-export default function BirthdayEditor() {
+export default function BirthdayEditor({ employee }) {
     const stageRef = useRef();
     const canvasWrapperRef = useRef(null);
 
@@ -82,8 +74,6 @@ export default function BirthdayEditor() {
         selectedElement && selectedElement.type === "text";
 
     const currentTemplate = templates.find((t) => t.id === selectedTemplateId);
-
-    console.log(birthdayWishes)
 
     useEffect(() => {
         const handleResize = () => {
@@ -438,7 +428,7 @@ export default function BirthdayEditor() {
                             }}
                         >
                             <TextField
-                                label="Add Wishes"
+                                label={`Add Wishes for ${employee.firstName}`}
                                 value={birthdayWishes}
                                 multiline
                                 rows={4}

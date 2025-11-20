@@ -5,8 +5,11 @@ import BirthdayEditor from "@/components/birthdayEditor/BirthdayEditor";
 export default function ScheduleModal({ open, onClose, employee }) {
     if (!employee) return null;
 
+    console.log("employee", employee)
+
     return (
         <Modal open={open} onClose={onClose}>
+
             <Box
                 sx={{
                     position: "absolute",
@@ -50,10 +53,10 @@ export default function ScheduleModal({ open, onClose, employee }) {
                         pr: 1,
                     }}
                 >
-                    <BirthdayEditor />
+                    <BirthdayEditor employee={employee} />
                 </Box>
 
-                    {/* <Box
+                {/* <Box
                         sx={{
                             display: "flex",
                             justifyContent: "flex-end",

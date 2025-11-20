@@ -15,9 +15,9 @@ export default function TemplateTab({
     return (
         <Box>
             <Typography
-                variant="subtitle2"
-                fontWeight={600}
-                mb={1}
+                variant="subtitle1"
+                fontWeight={700}
+                sx={{ mb: 2, textTransform: "uppercase", fontSize: 13 }}
             >
                 Choose a Template
             </Typography>

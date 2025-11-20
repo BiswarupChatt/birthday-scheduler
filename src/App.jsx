@@ -12,10 +12,6 @@ import { ToastProvider } from "./hooks/ToastContext";
 export default function App() {
   const themeMode = useAtomValue(themeAtom);
 
-  // Debug: See what we're actually getting
-  console.log('themeMode type:', typeof themeMode);
-  console.log('themeMode value:', themeMode);
-
   const theme = useMemo(() => {
     // Handle cases where themeMode might be an object or undefined
     let mode = 'light'; // default
@@ -27,7 +23,6 @@ export default function App() {
       mode = themeMode.value || themeMode.theme || 'light';
     }
 
-    console.log('Using theme mode:', mode);
     return getTheme(mode);
   }, [themeMode]);
 
