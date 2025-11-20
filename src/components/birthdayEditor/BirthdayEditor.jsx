@@ -8,7 +8,8 @@ import {
     Tabs,
     Toolbar,
     Typography,
-    Grid
+    Grid,
+    TextField
 } from "@mui/material";
 
 import {
@@ -59,32 +60,30 @@ export default function BirthdayEditor() {
     const canvasWrapperRef = useRef(null);
 
     const [canvasSize, setCanvasSize] = useState(DEFAULT_CANVAS_SIZE);
-
     const [selectedTemplateId, setSelectedTemplateId] = useState("t2");
     const [photoUrl, setPhotoUrl] = useState(null);
-
     const [photoSettings, setPhotoSettings] = useState({
         x: 0,
         y: 0,
         scale: 1,
         rotation: 0,
     });
-
     const [fitScale, setFitScale] = useState(1);
     const [zoomFactor, setZoomFactor] = useState(1);
-
     const [texts, setTexts] = useState([]);
     const [activeTextId, setActiveTextId] = useState(null);
     const [fontFamily, setFontFamily] = useState("Arial");
-
     const [selectedElement, setSelectedElement] = useState(null);
     const [activeTab, setActiveTab] = useState("templates");
+    const [birthdayWishes, setBirthdayWishes] = useState("")
 
     const isPhotoSelected = selectedElement === "photo";
     const isTextSelected =
         selectedElement && selectedElement.type === "text";
 
     const currentTemplate = templates.find((t) => t.id === selectedTemplateId);
+
+    console.log(birthdayWishes)
 
     useEffect(() => {
         const handleResize = () => {
@@ -166,7 +165,7 @@ export default function BirthdayEditor() {
     const handleExport = () => {
         if (!stageRef.current) return;
         const uri = stageRef.current.toDataURL({ pixelRatio: 2 });
-
+        console.log(birthdayWishes)
         const link = document.createElement("a");
         link.download = "birthday-card.png";
         link.href = uri;
@@ -175,7 +174,6 @@ export default function BirthdayEditor() {
         link.remove();
     };
 
-    // Zoom controls
     const applyZoom = (zoom) => {
         setZoomFactor(zoom);
         setPhotoSettings((prev) => ({
@@ -203,14 +201,12 @@ export default function BirthdayEditor() {
         setSelectedElement("photo");
     };
 
-    // Rotation controls
     const changeRotation = (value) => {
         if (Array.isArray(value)) return;
         setPhotoSettings((prev) => ({ ...prev, rotation: value }));
         setSelectedElement("photo");
     };
 
-    // Text actions
     const addText = () => {
         if (!photoUrl) return; // keep same feature behaviour
         const id = Date.now().toString();
@@ -275,26 +271,8 @@ export default function BirthdayEditor() {
         setActiveTab(newValue);
     };
 
-    // ---- layout ---- //
-
     return (
-        <Box sx={{ bgcolor: "background.default", minHeight: "100vh" }}>
-            <AppBar position="static" elevation={0} color="transparent">
-                <Toolbar sx={{ justifyContent: "space-between" }}>
-                    <Typography variant="h6" fontWeight={600}>
-                        Birthday Template Editor
-                    </Typography>
-                    <Stack direction="row" spacing={1}>
-                        <Button
-                            variant="contained"
-                            onClick={handleExport}
-                            disabled={!photoUrl}
-                        >
-                            Export as PNG
-                        </Button>
-                    </Stack>
-                </Toolbar>
-            </AppBar>
+        <Box sx={{ bgcolor: "background.default", p: 2 }}>
 
             <Box sx={{ m: 2 }}>
 
@@ -309,7 +287,6 @@ export default function BirthdayEditor() {
                                 p: 1,
                                 borderRadius: 3,
                                 flex: 1,
-                                // flex: { xs: "0 0 auto", md: "0 0 360px" },
                                 display: "flex",
                                 justifyContent: "center",
                                 alignItems: "center",
@@ -447,6 +424,42 @@ export default function BirthdayEditor() {
                             )}
                         </Box>
                     </Grid>
+
+                    <Grid size={12}>
+                        <Box
+                            sx={{
+                                flex: 1,
+                                borderRadius: 3,
+                                p: 2,
+                                minWidth: 0,
+                                display: "flex",
+                                flexDirection: "column",
+                                bgcolor: "background.paper"
+                            }}
+                        >
+                            <TextField
+                                label="Add Wishes"
+                                value={birthdayWishes}
+                                multiline
+                                rows={4}
+                                onChange={(e) => {
+                                    e.stopPropagation()
+                                    setBirthdayWishes(e.target.value)
+                                }}
+                            />
+                        </Box>
+
+                        <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 1 }}>
+                            <Button
+                                variant="contained"
+                                onClick={handleExport}
+                                disabled={!photoUrl}
+                            >
+                                Export as PNG
+                            </Button>
+                        </Box>
+                    </Grid>
+
                 </Grid>
             </Box>
 
