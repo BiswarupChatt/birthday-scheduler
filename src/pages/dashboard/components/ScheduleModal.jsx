@@ -53,17 +53,17 @@ export default function ScheduleModal({ open, onClose, employee }) {
                     <BirthdayEditor />
                 </Box>
 
-                <Box
-                    sx={{
-                        display: "flex",
-                        justifyContent: "flex-end",
-                        gap: 1,
-                        mt: 2
-                    }}
-                >
-                    <Button onClick={onClose}>Close</Button>
-                    <Button variant="contained">Schedule</Button>
-                </Box>
+                    {/* <Box
+                        sx={{
+                            display: "flex",
+                            justifyContent: "flex-end",
+                            gap: 1,
+                            mt: 2
+                        }}
+                    >
+                        <Button onClick={onClose}>Close</Button>
+                        <Button variant="contained">Schedule</Button>
+                    </Box> */}
             </Box>
         </Modal>
     );

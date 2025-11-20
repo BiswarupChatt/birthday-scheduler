@@ -455,7 +455,7 @@ export default function BirthdayEditor() {
                                 onClick={handleExport}
                                 disabled={!photoUrl}
                             >
-                                Export as PNG
+                                Schedule
                             </Button>
                         </Box>
                     </Grid>
