@@ -9,8 +9,6 @@ const Dashboard = () => {
     <>
       <SectionHeader title="Dashboard" />
       <BirthdayList />
-      {/* <BirthdayTemplateEditor /> */}
-      <BirthdayEditor />
     </>
   )
 };

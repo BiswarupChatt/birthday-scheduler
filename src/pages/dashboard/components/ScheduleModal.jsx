@@ -1,30 +1,70 @@
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Box } from "@mui/material";
-import BirthdayTemplateEditor from "./BirthdayTemplateEditor";
+import { Modal, Button, Typography, Box, IconButton } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import BirthdayEditor from "@/components/birthdayEditor/BirthdayEditor";
 
 export default function ScheduleModal({ open, onClose, employee }) {
     if (!employee) return null;
 
-    console.log(employee)
-
     return (
-        <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-            <DialogTitle>Schedule Birthday Wish</DialogTitle>
+        <Modal open={open} onClose={onClose}>
+            <Box
+                sx={{
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
+                    width: "90vw",
+                    height: "95vh",
+                    bgcolor: "background.paper",
+                    borderRadius: 3,
+                    boxShadow: 24,
+                    p: 3,
+                    overflow: "hidden",
+                    display: "flex",
+                    flexDirection: "column",
+                }}
+            >
+                <IconButton
+                    onClick={onClose}
+                    sx={{
+                        position: "absolute",
+                        top: 12,
+                        right: 12,
+                        bgcolor: "rgba(0,0,0,0.05)",
+                        "&:hover": {
+                            bgcolor: "rgba(0,0,0,0.1)"
+                        }
+                    }}
+                >
+                    <CloseIcon />
+                </IconButton>
 
-            <DialogContent dividers>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                    <Typography><strong>Name:</strong> {employee.firstName} {employee.lastName}</Typography>
-                    <Typography><strong>DOB:</strong> {employee.dateOfBirth}</Typography>
-                    <Typography><strong>Designation:</strong> {employee.designation || "N/A"}</Typography>
-                    <Typography><strong>Days Left:</strong> {employee.diffInDays}</Typography>
+                <Typography variant="h6" fontWeight={600} mb={2}>
+                    Schedule Birthday Wish
+                </Typography>
+
+                <Box
+                    sx={{
+                        flex: 1,
+                        overflowY: "auto",
+                        pr: 1,
+                    }}
+                >
+                    <BirthdayEditor />
                 </Box>
 
-                <BirthdayTemplateEditor />
-            </DialogContent>
-
-            <DialogActions>
-                <Button onClick={onClose}>Close</Button>
-                <Button variant="contained">Schedule</Button>
-            </DialogActions>
-        </Dialog>
+                <Box
+                    sx={{
+                        display: "flex",
+                        justifyContent: "flex-end",
+                        gap: 1,
+                        mt: 2
+                    }}
+                >
+                    <Button onClick={onClose}>Close</Button>
+                    <Button variant="contained">Schedule</Button>
+                </Box>
+            </Box>
+        </Modal>
     );
 }
