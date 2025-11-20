@@ -44,3 +44,12 @@ export const getUpcomingBirthdays = async (days = 7) => {
   const { data } = await api.post("/employee/upcoming-birthdays", { days });
   return data;
 };
+
+export const createBirthdaySchedule = async ({ message, imageUrl, id }) => {
+  const { data } = await api.post(`/birthday-schedule/${id}`, {
+    message,
+    imageUrl,
+  });
+
+  return data;
+};

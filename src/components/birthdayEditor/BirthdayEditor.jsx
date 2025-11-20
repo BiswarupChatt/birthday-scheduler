@@ -23,6 +23,9 @@ import TemplateImage from "./components/TemplateImage";
 import TemplateTab from "./components/TemplateTab";
 import ImageTab from "./components/ImageTab";
 import TextTab from "./components/TextTab";
+import { createClient } from "@supabase/supabase-js";
+import { createBirthdaySchedule } from "@/lib/axios/apicalls";
+import { useToast } from "@/hooks/ToastContext";
 
 const DEFAULT_CANVAS_SIZE = 350;
 
@@ -74,6 +77,14 @@ export default function BirthdayEditor({ employee }) {
         selectedElement && selectedElement.type === "text";
 
     const currentTemplate = templates.find((t) => t.id === selectedTemplateId);
+
+    const toast = useToast()
+
+    const supabase = createClient(
+        import.meta.env.VITE_SUPABASE_URL,
+        import.meta.env.VITE_SUPABASE_ANON
+    );
+
 
     useEffect(() => {
         const handleResize = () => {
@@ -152,17 +163,63 @@ export default function BirthdayEditor({ employee }) {
         }
     };
 
-    const handleExport = () => {
+    // const handleSchedule = () => {
+    //     if (!stageRef.current) return;
+    //     const uri = stageRef.current.toDataURL({ pixelRatio: 2 });
+    //     console.log(birthdayWishes)
+    //     const link = document.createElement("a");
+    //     link.download = "birthday-card.png";
+    //     link.href = uri;
+    //     document.body.appendChild(link);
+    //     link.click();
+    //     link.remove();
+    // };
+
+    const handleSchedule = async (employeeId) => {
         if (!stageRef.current) return;
-        const uri = stageRef.current.toDataURL({ pixelRatio: 2 });
-        console.log(birthdayWishes)
-        const link = document.createElement("a");
-        link.download = "birthday-card.png";
-        link.href = uri;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
+
+        const { data: buckets } = await supabase.storage.listBuckets();
+        console.log("BUCKETS:", buckets);
+        console.log(import.meta.env.VITE_SUPABASE_URL);
+        console.log(import.meta.env.VITE_SUPABASE_ANON);
+
+        // 1️⃣ Convert to blob
+        const dataUrl = stageRef.current.toDataURL({ pixelRatio: 2 });
+        const blob = await (await fetch(dataUrl)).blob();
+        const fileName = `birthday-card-${Date.now()}.png`;
+
+        // 2️⃣ Upload to Supabase
+        const { data, error } = await supabase.storage
+            .from("birthday-app")
+            .upload(fileName, blob, {
+                contentType: "image/png",
+            });
+
+        if (error) {
+            toast.error("Supabase upload error", error);
+            return;
+        }
+
+        // 3️⃣ Get public URL
+        const { data: urlData } = supabase.storage
+            .from("birthday-app")
+            .getPublicUrl(fileName);
+
+        const imageUrl = urlData.publicUrl;
+        console.log("URL data", urlData)
+
+        // 4️⃣ Call your backend API using your central API file
+        const res = await createBirthdaySchedule({
+            id: employeeId,
+            message: birthdayWishes,
+            imageUrl,
+        });
+
+        console.log("API Response:", res);
+
+        toast.success("Birthday schedule created successfully!");
     };
+
 
     const applyZoom = (zoom) => {
         setZoomFactor(zoom);
@@ -442,7 +499,9 @@ export default function BirthdayEditor({ employee }) {
                         <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 1 }}>
                             <Button
                                 variant="contained"
-                                onClick={handleExport}
+                                onClick={() => {
+                                    handleSchedule(employee._id)
+                                }}
                                 disabled={!photoUrl}
                             >
                                 Schedule
