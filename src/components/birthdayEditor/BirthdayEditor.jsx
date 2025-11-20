@@ -298,9 +298,9 @@ export default function BirthdayEditor() {
 
             <Box sx={{ m: 2 }}>
 
-                <Grid container spacing={2}>
+                <Grid container spacing={2} sx={{ alignItems: "stretch" }}>
                     {/* LEFT: CANVAS AREA */}
-                    <Grid size={{ xs: 12, md: 7 }}>
+                    <Grid size={{ xs: 12, md: 7 }} sx={{ display: "flex" }}>
                         <Box
                             ref={canvasWrapperRef}
                             onDrop={handleDrop}
@@ -308,7 +308,8 @@ export default function BirthdayEditor() {
                             sx={{
                                 p: 1,
                                 borderRadius: 3,
-                                flex: { xs: "0 0 auto", md: "0 0 360px" },
+                                flex: 1,
+                                // flex: { xs: "0 0 auto", md: "0 0 360px" },
                                 display: "flex",
                                 justifyContent: "center",
                                 alignItems: "center",
@@ -379,7 +380,7 @@ export default function BirthdayEditor() {
                     </Grid>
 
                     {/* RIGHT: CONTROLLER TABS */}
-                    <Grid size={{ xs: 12, md: 5 }}  >
+                    <Grid size={{ xs: 12, md: 5 }} sx={{ display: "flex" }} >
                         <Box
                             sx={{
                                 flex: 1,
