@@ -154,7 +154,21 @@ export default function BirthdayList() {
             )}
 
             {!loading && birthdays.length === 0 && (
-                <Typography>No upcoming birthdays found 🎉</Typography>
+                <Box
+                    sx={{
+                        width: "100%",
+                        textAlign: "center",
+                        py: 8,
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        color: "text.secondary",
+                    }}
+                >
+                    <Typography variant="h6" fontWeight={600}>
+                        No Upcoming Birthdays 🎉
+                    </Typography>   
+                </Box>
             )}
 
             {!loading && (
