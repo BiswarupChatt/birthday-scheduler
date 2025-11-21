@@ -5,7 +5,8 @@ import {
     Tab,
     Tabs,
     Grid,
-    TextField
+    TextField,
+    CircularProgress
 } from "@mui/material";
 
 import {
@@ -72,6 +73,7 @@ export default function BirthdayEditor({ employee }) {
     const [selectedElement, setSelectedElement] = useState(null);
     const [activeTab, setActiveTab] = useState("templates");
     const [birthdayWishes, setBirthdayWishes] = useState("")
+    const [loading, setLoading] = useState(false)
 
     const isPhotoSelected = selectedElement === "photo";
     const isTextSelected =
@@ -158,21 +160,9 @@ export default function BirthdayEditor({ employee }) {
         }
     };
 
-    // const handleSchedule = () => {
-    //     if (!stageRef.current) return;
-    //     const uri = stageRef.current.toDataURL({ pixelRatio: 2 });
-    //     console.log(birthdayWishes)
-    //     const link = document.createElement("a");
-    //     link.download = "birthday-card.png";
-    //     link.href = uri;
-    //     document.body.appendChild(link);
-    //     link.click();
-    //     link.remove();
-    // };
-
     const handleSchedule = async (employeeId) => {
+        setLoading(true)
         if (!stageRef.current) return;
-
         let uploadedFileName = null;
 
         try {
@@ -197,17 +187,8 @@ export default function BirthdayEditor({ employee }) {
         catch (error) {
             console.error("Error occurred:", error);
             toast.error("Something went wrong!");
-
-            // 4️⃣ If schedule API failed → delete uploaded image
-            // if (uploadedFileName) {
-            //     try {
-            //         await deleteUploadedFile(uploadedFileName);
-            //         console.log("Rolled back: uploaded image deleted.");
-            //     } catch (deleteErr) {
-            //         console.error("Failed to delete uploaded image:", deleteErr);
-            //     }
-            // }
-
+        } finally {
+            setLoading(false)
         }
     };
 
@@ -489,13 +470,16 @@ export default function BirthdayEditor({ employee }) {
 
                         <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 1 }}>
                             <Button
+                                sx={{ minWidth: "100px" }}
                                 variant="contained"
-                                onClick={() => {
-                                    handleSchedule(employee._id)
-                                }}
-                                disabled={!photoUrl}
+                                onClick={() => handleSchedule(employee._id)}
+                                disabled={!photoUrl || loading}
                             >
-                                Schedule
+                                {loading ? (
+                                    <CircularProgress size={22} />
+                                ) : (
+                                    "Schedule"
+                                )}
                             </Button>
                         </Box>
                     </Grid>
