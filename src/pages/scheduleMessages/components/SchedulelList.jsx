@@ -14,6 +14,14 @@ export default function ScheduleList() {
     const [open, setOpen] = useState(false);
 
 
+    const handleUpdate = (updatedItem) => {
+        setSchedules((prev) =>
+            prev.map((s) => (s._id === updatedItem._id ? updatedItem : s))
+        );
+        setSelectedItem(updatedItem); // refresh modal
+    };
+
+
     const handleOpen = (item) => {
         setSelectedItem(item);
         setOpen(true);
@@ -148,7 +156,9 @@ export default function ScheduleList() {
                 item={selectedItem}
                 getStatusChipProps={getStatusChipProps}
                 theme={theme}
+                onUpdated={handleUpdate}
             />
+
         </>
     );
 }

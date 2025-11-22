@@ -58,3 +58,8 @@ export const getAllBirthdaySchedules = async () => {
   const { data } = await api.get(`/birthday-schedule/all`);
   return data;
 };
+
+export const updateBirthdaySchedule = async (id, payload) => {
+  const { data } = await api.put(`/birthday-schedule/${id}`, payload);
+  return data;
+};
