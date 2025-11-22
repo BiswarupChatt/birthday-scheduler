@@ -7,6 +7,7 @@ import {
     Chip,
     IconButton,
     TextField,
+    Popover,
     MenuItem
 } from "@mui/material";
 
@@ -32,8 +33,11 @@ export default function ScheduleDetailsModal({
     const [message, setMessage] = useState(item.message);
     const [status, setStatus] = useState(item.status);
     const [loadingEdit, setLoadingEdit] = useState(false);
+    const [anchorEl, setAnchorEl] = useState(null);
 
-    // 🔥 ONE UNIFIED API HANDLER
+    const openPopover = (event) => setAnchorEl(event.currentTarget);
+    const closePopover = () => setAnchorEl(null);
+
     const updateSchedule = async (updates) => {
         try {
             const updated = await updateBirthdaySchedule(item._id, {
@@ -42,14 +46,12 @@ export default function ScheduleDetailsModal({
                 ...updates,
             });
 
-            // update parent
             onUpdated(updated.data);
         } catch (error) {
             console.error("Update failed:", error);
         }
     };
 
-    // ✏ SAVE MESSAGE INLINE
     const saveMessage = async () => {
         if (message.trim() === item.message) {
             setEditing(false);
@@ -62,8 +64,8 @@ export default function ScheduleDetailsModal({
         setLoadingEdit(false);
     };
 
-    // 🔄 SAVE STATUS INLINE
-    const saveStatus = async (newStatus) => {
+    const handleStatusChange = async (newStatus) => {
+        closePopover();
         setStatus(newStatus);
         await updateSchedule({ status: newStatus });
     };
@@ -75,29 +77,63 @@ export default function ScheduleDetailsModal({
             </DialogTitle>
 
             <DialogContent sx={{ pb: 3 }}>
-                {/* Image */}
+
                 <Box
                     component="img"
                     src={item.imageUrl}
                     alt="schedule"
                     sx={{
                         mx: "auto",
-                        width: "100%",
-                        height: 220,
+                        width: .3,
+                        height: .3,
                         borderRadius: 2,
                         objectFit: "cover",
                         mb: 2,
                     }}
                 />
+                <Box sx={{ display: "flex", justifyContent: "space-between" }}>
 
-                {/* Designation */}
-                <Typography fontSize={14} color="text.secondary">
-                    {item.employeeId.designation} • {item.employeeId.empId}
-                </Typography>
+                    <Typography fontSize={14} color="text.secondary">
+                        {item.employeeId.designation} • {item.employeeId.empId}
+                    </Typography>
 
-                {/* ======================
-                    MESSAGE INLINE EDIT
-                   ====================== */}
+                    <Box sx={{ display: "flex", gap: 2 }}>
+                        <Typography fontSize={14} fontWeight={600} sx={{ mb: 1 }}>
+                            Status:
+                        </Typography>
+
+                        <Chip
+                            size="small"
+                            onClick={openPopover}
+                            {...getStatusChipProps(status, theme)}
+                            sx={{
+                                cursor: "pointer",
+                                px: 1,
+                                ...getStatusChipProps(status, theme).sx,
+                            }}
+                        />
+
+                        {/* Popover Menu */}
+                        <Popover
+                            open={Boolean(anchorEl)}
+                            anchorEl={anchorEl}
+                            onClose={closePopover}
+                            anchorOrigin={{
+                                vertical: "bottom",
+                                horizontal: "left",
+                            }}
+                        >
+                            <MenuItem onClick={() => handleStatusChange("pending")}>
+                                Pending
+                            </MenuItem>
+
+                            <MenuItem onClick={() => handleStatusChange("cancel")}>
+                                Cancel
+                            </MenuItem>
+                        </Popover>
+                    </Box>
+                </Box>
+
                 <Box sx={{ mt: 3 }}>
                     <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                         <Typography fontSize={15} fontWeight={600}>Message:</Typography>
@@ -135,6 +171,7 @@ export default function ScheduleDetailsModal({
                         <Typography sx={{ mt: 1 }}>{message}</Typography>
                     ) : (
                         <TextField
+                            variant="standard"
                             fullWidth
                             multiline
                             autoFocus
@@ -145,44 +182,12 @@ export default function ScheduleDetailsModal({
                     )}
                 </Box>
 
-                {/* ======================
-                   SCHEDULE DATE
-                   ====================== */}
                 <Typography sx={{ mt: 2 }} fontSize={14} color="primary">
                     <strong>Scheduled:</strong>{" "}
                     {format(new Date(item.scheduledDate), "dd MMM yyyy, hh:mm a")}
                 </Typography>
 
-                {/* ======================
-                    STATUS UPDATE INLINE
-                   ====================== */}
-                <Box sx={{ mt: 3 }}>
-                    <Typography fontSize={15} fontWeight={600} sx={{ mb: 1 }}>
-                        Status:
-                    </Typography>
 
-                    <TextField
-                        select
-                        fullWidth
-                        size="small"
-                        value={status}
-                        onChange={(e) => saveStatus(e.target.value)}
-                    >
-                        <MenuItem value="pending">Pending</MenuItem>
-                        <MenuItem value="cancel">Cancel</MenuItem>
-                    </TextField>
-
-                    <Box sx={{ mt: 2 }}>
-                        <Chip
-                            size="small"
-                            {...getStatusChipProps(status, theme)}
-                            sx={{
-                                px: 1.2,
-                                ...getStatusChipProps(status, theme).sx,
-                            }}
-                        />
-                    </Box>
-                </Box>
             </DialogContent>
         </Dialog>
     );
