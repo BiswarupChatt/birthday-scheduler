@@ -4,7 +4,7 @@ import ROUTES from "./routes";
 
 import DashboardLayout from "../layout/dashboardLayout/DashboardLayout";
 import Dashboard from "../pages/dashboard/Dashboard";
-import ScheduleMessages from "../pages/ScheduleMessages";
+import ScheduleMessages from "../pages/scheduleMessages/ScheduleMessages";
 import Connection from "../pages/connection/Connection";
 import Account from "../pages/account/Account";
 import Settings from "../pages/settings/Settings";

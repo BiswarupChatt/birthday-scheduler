@@ -53,3 +53,8 @@ export const createBirthdaySchedule = async ({ message, imageUrl, id }) => {
 
   return data;
 };
+
+export const getAllBirthdaySchedules = async () => {
+  const { data } = await api.get(`/birthday-schedule/all`);
+  return data;
+};

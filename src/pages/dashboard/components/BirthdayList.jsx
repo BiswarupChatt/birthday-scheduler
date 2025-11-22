@@ -167,7 +167,7 @@ export default function BirthdayList() {
                 >
                     <Typography variant="h6" fontWeight={600}>
                         No Upcoming Birthdays 🎉
-                    </Typography>   
+                    </Typography>
                 </Box>
             )}
 
@@ -222,8 +222,9 @@ export default function BirthdayList() {
                                         setSelectedEmp(emp);
                                         setOpenModal(true);
                                     }}
+                                    disabled={emp.isMessageScheduled ?? emp.isMessageScheduled}
                                 >
-                                    Schedule
+                                    {(emp.isMessageScheduled || false) ? "Scheduled" : "Schedule"}
                                 </Button>
                             </Paper>
                         </Grid>
