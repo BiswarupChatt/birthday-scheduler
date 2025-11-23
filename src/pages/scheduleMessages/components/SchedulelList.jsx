@@ -117,11 +117,11 @@ export default function ScheduleList() {
                                 }}
                             >
                                 <Typography fontWeight={700} fontSize={18} sx={{ mt: 1.5 }}>
-                                    {item.employeeId.firstName} {item.employeeId.lastName}
+                                    {item?.employeeId?.firstName} {item.employeeId?.lastName}
                                 </Typography>
 
                                 <Typography fontSize={13} color="text.secondary">
-                                    {item.employeeId.designation} • {item.employeeId.empId}
+                                    {item.employeeId?.designation} • {item.employeeId?.empId}
                                 </Typography>
 
                                 <Typography fontSize={14} sx={{ mt: 1 }}>

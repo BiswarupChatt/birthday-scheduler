@@ -60,7 +60,7 @@ const Sidebar = () => {
       >
         {isOpen && (
           <Typography variant="h6" fontWeight={700}>
-            Admin
+            WishTrigger
           </Typography>
         )}
         <IconButton
