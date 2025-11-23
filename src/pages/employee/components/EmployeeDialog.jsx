@@ -49,7 +49,6 @@ export default function EmployeeDialog({
 
     const isEdit = mode === "edit";
 
-    // Load initial values
     useEffect(() => {
         const safeValues =
             initialValues && Object.keys(initialValues).length > 0
@@ -66,9 +65,6 @@ export default function EmployeeDialog({
         setErrors({});
     }, [initialValues, open]);
 
-    // ---------------------------
-    // AUTO FORMAT DOB (No validation here!)
-    // ---------------------------
     const handleDOBChange = (e) => {
         let value = e.target.value;
 
@@ -83,46 +79,37 @@ export default function EmployeeDialog({
 
         setForm((prev) => ({ ...prev, dateOfBirth: value }));
 
-        // No validation while typing
         setErrors((prev) => ({ ...prev, dateOfBirth: "" }));
     };
 
-    // ---------------------------
-    // VALIDATE ENTIRE FORM ON SUBMIT
-    // ---------------------------
     const validateForm = () => {
         let temp = {};
 
-        // First Name (REQUIRED)
         if (!form.firstName.trim())
             temp.firstName = "First Name is required";
-        else if (!/^[A-Za-z]+$/.test(form.firstName.trim()))
+        else if (!/^[A-Za-z ]+$/.test(form.firstName.trim()))
             temp.firstName = "Only alphabets allowed";
         else temp.firstName = "";
 
-        // Emp ID (optional)
         if (form.empId.trim() && form.empId.trim().length < 2)
             temp.empId = "Min 2 characters required";
         else temp.empId = "";
 
-        // Last Name (optional)
-        if (form.lastName.trim() && !/^[A-Za-z]+$/.test(form.lastName.trim()))
+        if (form.lastName.trim() && !/^[A-Za-z ]+$/.test(form.lastName.trim()))
             temp.lastName = "Only alphabets allowed";
         else temp.lastName = "";
 
-        // Phone (optional)
         if (form.phoneNumber.trim()) {
             if (!/^[0-9]{10}$/.test(form.phoneNumber.trim()))
-                temp.phoneNumber = "Phone must be 10 digits";
+                temp.phoneNumber = "Phone must be exactly 10 digits";
             else temp.phoneNumber = "";
         } else temp.phoneNumber = "";
 
-        // Designation (optional)
+
         if (form.designation.trim() && form.designation.trim().length < 2)
             temp.designation = "Min 2 characters";
         else temp.designation = "";
 
-        // DOB (REQUIRED — VALIDATE HERE ONLY)
         if (!form.dateOfBirth) {
             temp.dateOfBirth = "Date of Birth is required";
         } else {
@@ -138,9 +125,6 @@ export default function EmployeeDialog({
         return Object.values(temp).every((x) => x === "");
     };
 
-    // ---------------------------
-    // SUBMIT HANDLER
-    // ---------------------------
     const handleSubmit = () => {
         if (!validateForm()) return;
 
@@ -166,7 +150,6 @@ export default function EmployeeDialog({
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <Grid container spacing={2}>
 
-                        {/* EMP ID */}
                         <Grid size={{ xs: 12, md: 6 }}>
                             <TextField
                                 label="Emp ID"
@@ -181,7 +164,6 @@ export default function EmployeeDialog({
                             />
                         </Grid>
 
-                        {/* DESIGNATION */}
                         <Grid size={{ xs: 12, md: 6 }}>
                             <TextField
                                 label="Designation"
@@ -196,7 +178,6 @@ export default function EmployeeDialog({
                             />
                         </Grid>
 
-                        {/* FIRST NAME (REQUIRED) */}
                         <Grid size={{ xs: 12, md: 6 }}>
                             <TextField
                                 label="First Name *"
@@ -211,7 +192,6 @@ export default function EmployeeDialog({
                             />
                         </Grid>
 
-                        {/* LAST NAME */}
                         <Grid size={{ xs: 12, md: 6 }}>
                             <TextField
                                 label="Last Name"
@@ -226,22 +206,23 @@ export default function EmployeeDialog({
                             />
                         </Grid>
 
-                        {/* PHONE */}
                         <Grid size={{ xs: 12, md: 6 }}>
                             <TextField
                                 label="Phone Number"
                                 fullWidth
                                 size="small"
                                 value={form.phoneNumber}
-                                onChange={(e) =>
-                                    setForm((p) => ({ ...p, phoneNumber: e.target.value }))
-                                }
+                                onChange={(e) => {
+                                    let value = e.target.value.replace(/\D/g, "");
+                                    if (value.length > 10) value = value.slice(0, 10);
+                                    setForm((p) => ({ ...p, phoneNumber: value }));
+                                }}
                                 error={!!errors.phoneNumber}
                                 helperText={errors.phoneNumber}
                             />
+
                         </Grid>
 
-                        {/* DOB (REQUIRED) */}
                         <Grid size={{ xs: 12, md: 6 }}>
                             <TextField
                                 label="Date of Birth *"
@@ -268,7 +249,6 @@ export default function EmployeeDialog({
                             />
                         </Grid>
 
-                        {/* STATUS */}
                         <Grid size={12}>
                             <Box display="flex" alignItems="center">
                                 <Typography>
@@ -286,7 +266,6 @@ export default function EmployeeDialog({
                         </Grid>
                     </Grid>
 
-                    {/* CALENDAR MODAL */}
                     <Dialog
                         open={openDatePicker}
                         onClose={() => setOpenDatePicker(false)}
