@@ -52,7 +52,7 @@ const templates = [
 ];
 
 
-export default function BirthdayEditor({ employee }) {
+export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
     const stageRef = useRef();
     const canvasWrapperRef = useRef(null);
 
@@ -184,12 +184,15 @@ export default function BirthdayEditor({ employee }) {
             });
 
             toast.success("Birthday schedule created successfully!");
+            closeModal()
+            onScheduled()
         }
         catch (error) {
             console.error("Error occurred:", error);
             toast.error("Something went wrong!");
         } finally {
             setLoading(false)
+
         }
     };
 

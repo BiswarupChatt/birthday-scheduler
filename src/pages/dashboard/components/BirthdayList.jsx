@@ -36,16 +36,6 @@ export default function BirthdayList() {
 
     const formatDOB = (dob) => format(new Date(dob), "dd MMM");
 
-    const calculateDaysLeft = (dob) => {
-        const today = new Date();
-        let birthday = new Date(dob);
-
-        birthday.setFullYear(today.getFullYear());
-        if (isBefore(birthday, today)) birthday = addYears(birthday, 1);
-
-        return differenceInDays(birthday, today);
-    };
-
     const saveDays = () => {
         const num = Number(tempDays);
 
@@ -236,6 +226,7 @@ export default function BirthdayList() {
             <ScheduleModal
                 open={openModal}
                 onClose={() => setOpenModal(false)}
+                onScheduled={() => fetchBirthdays(days)}   // 👈 call after scheduling
                 employee={selectedEmp}
             />
         </>

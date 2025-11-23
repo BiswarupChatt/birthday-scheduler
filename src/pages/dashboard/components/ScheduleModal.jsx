@@ -2,7 +2,7 @@ import { Modal, Button, Typography, Box, IconButton } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import BirthdayEditor from "@/components/birthdayEditor/BirthdayEditor";
 
-export default function ScheduleModal({ open, onClose, employee }) {
+export default function ScheduleModal({ open, onClose, onScheduled, employee }) {
     if (!employee) return null;
 
     console.log("employee", employee)
@@ -53,7 +53,7 @@ export default function ScheduleModal({ open, onClose, employee }) {
                         pr: 1,
                     }}
                 >
-                    <BirthdayEditor employee={employee} />
+                    <BirthdayEditor employee={employee} closeModal={onClose} onScheduled={onScheduled} />
                 </Box>
 
                 {/* <Box
