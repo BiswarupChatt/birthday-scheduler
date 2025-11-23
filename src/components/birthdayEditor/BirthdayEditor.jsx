@@ -74,6 +74,8 @@ export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
     const [activeTab, setActiveTab] = useState("templates");
     const [birthdayWishes, setBirthdayWishes] = useState("")
     const [loading, setLoading] = useState(false)
+    const [history, setHistory] = useState([]);
+    const [future, setFuture] = useState([]);
 
     const isPhotoSelected = selectedElement === "photo";
     const isTextSelected =
@@ -100,6 +102,23 @@ export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
         return () => window.removeEventListener("resize", handleResize);
     }, []);
 
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.ctrlKey && e.key === "z" && !e.shiftKey) {
+                e.preventDefault();
+                undo();
+            }
+            if ((e.ctrlKey && e.key === "y") || (e.ctrlKey && e.shiftKey && e.key === "Z")) {
+                e.preventDefault();
+                redo();
+            }
+        };
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+    }, [history, future, photoUrl, texts, photoSettings, selectedTemplateId]);
+
+
     const loadImageFromFile = (file) => {
         if (!file) return;
 
@@ -117,10 +136,9 @@ export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
             setFitScale(scale);
             setZoomFactor(1);
 
-            // Use center coordinates so offset (image.width/2,image.height/2) rotates around center
             setPhotoSettings({
-                x: boxSize / 2,          // center x of canvas
-                y: boxSize / 2,          // center y of canvas
+                x: boxSize / 2,
+                y: boxSize / 2,
                 scale: scale * 1,
                 rotation: 0,
             });
@@ -149,7 +167,10 @@ export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
     };
 
     const handleTemplateChange = (_, id) => {
-        if (id) setSelectedTemplateId(id);
+        if (id) {
+            saveStateToHistory();
+            setSelectedTemplateId(id);
+        }
     };
 
     const handleStageMouseDown = (e) => {
@@ -158,6 +179,156 @@ export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
             setSelectedElement(null);
             setActiveTextId(null);
         }
+    };
+
+    const applyZoom = (zoom) => {
+        saveStateToHistory()
+        setZoomFactor(zoom);
+        setPhotoSettings((prev) => ({
+            ...prev,
+            scale: fitScale * zoom,
+        }));
+        setSelectedElement("photo");
+    };
+
+    const changeZoom = (value) => {
+        if (Array.isArray(value)) return;
+        const z = clamp(value, 0.5, 2);
+        applyZoom(z);
+    };
+
+    const nudgeZoom = (delta) => {
+        saveStateToHistory()
+        setZoomFactor((prevZoom) => {
+            const nextZoom = clamp(prevZoom + delta, 0.1, 3);
+            setPhotoSettings((prev) => ({
+                ...prev,
+                scale: fitScale * nextZoom,
+            }));
+            return nextZoom;
+        });
+        setSelectedElement("photo");
+    };
+
+    const changeRotation = (value) => {
+        saveStateToHistory()
+        if (Array.isArray(value)) return;
+        setPhotoSettings((prev) => ({ ...prev, rotation: value }));
+        setSelectedElement("photo");
+    };
+
+    const addText = () => {
+        if (!photoUrl) return; // keep same feature behaviour
+        const id = Date.now().toString();
+        const newText = {
+            id,
+            text: "Your text",
+            x: canvasSize / 2 - 100,
+            y: canvasSize / 2,
+            fontSize: 36,
+            fontFamily,
+            fill: "#000000",
+        };
+        saveStateToHistory()
+        setTexts((prev) => [...prev, newText]);
+        setActiveTextId(id);
+        setSelectedElement({ type: "text", id });
+    };
+
+    const updateTextItem = (updated) => {
+        saveStateToHistory()
+        setTexts((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+    };
+
+    const handleActiveTextChange = (value) => {
+        setTexts((prev) =>
+            prev.map((t) =>
+                t.id === activeTextId ? { ...t, text: value } : t
+            )
+        );
+    };
+
+    const handleFontChange = (e) => {
+        const value = e.target.value;
+        setFontFamily(value);
+        setTexts((prev) =>
+            prev.map((t) =>
+                t.id === activeTextId ? { ...t, fontFamily: value } : t
+            )
+        );
+    };
+
+    const deleteText = (id) => {
+        setTexts((prev) => prev.filter((t) => t.id !== id));
+        setActiveTextId(null);
+        setSelectedElement(null);
+    };
+
+    const handleChangePhoto = () => {
+        saveStateToHistory()
+        setPhotoUrl(null);
+        setTexts([]);
+        setActiveTextId(null);
+        setSelectedElement(null);
+        setFitScale(1);
+        setZoomFactor(1);
+        setPhotoSettings({
+            x: 0,
+            y: 0,
+            scale: 1,
+            rotation: 0,
+        });
+    };
+
+    const handleTabChange = (_, newValue) => {
+        setActiveTab(newValue);
+    };
+
+    const undo = () => {
+        if (history.length === 0) return;
+
+        const previous = history[history.length - 1];
+        setFuture(f => [getCurrentState(), ...f]);   // save current to redo
+        setHistory(h => h.slice(0, -1));             // remove last
+
+        restoreState(previous);
+    };
+
+    const redo = () => {
+        if (future.length === 0) return;
+
+        const next = future[0];
+        setHistory(h => [...h, getCurrentState()]);  // save current to history
+        setFuture(f => f.slice(1));                  // remove next redo
+
+        restoreState(next);
+    };
+
+    const getCurrentState = () => ({
+        photoUrl,
+        photoSettings: { ...photoSettings },
+        texts: JSON.parse(JSON.stringify(texts)),
+        selectedTemplateId,
+    });
+
+    const restoreState = (state) => {
+        setPhotoUrl(state.photoUrl);
+        setPhotoSettings(state.photoSettings);
+        setTexts(state.texts);
+        setSelectedTemplateId(state.selectedTemplateId);
+    };
+
+
+    const saveStateToHistory = () => {
+        const snapshot = {
+            photoUrl,
+            photoSettings: { ...photoSettings },
+            texts: JSON.parse(JSON.stringify(texts)),
+            selectedTemplateId,
+        };
+
+        setHistory(prev => [...prev, snapshot]);
+        setFuture([]); // clear redo stack after new action
     };
 
     const handleSchedule = async (employeeId) => {
@@ -194,104 +365,6 @@ export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
             setLoading(false)
 
         }
-    };
-
-
-    const applyZoom = (zoom) => {
-        setZoomFactor(zoom);
-        setPhotoSettings((prev) => ({
-            ...prev,
-            scale: fitScale * zoom,
-        }));
-        setSelectedElement("photo");
-    };
-
-    const changeZoom = (value) => {
-        if (Array.isArray(value)) return;
-        const z = clamp(value, 0.5, 2);
-        applyZoom(z);
-    };
-
-    const nudgeZoom = (delta) => {
-        setZoomFactor((prevZoom) => {
-            const nextZoom = clamp(prevZoom + delta, 0.1, 3);
-            setPhotoSettings((prev) => ({
-                ...prev,
-                scale: fitScale * nextZoom,
-            }));
-            return nextZoom;
-        });
-        setSelectedElement("photo");
-    };
-
-    const changeRotation = (value) => {
-        if (Array.isArray(value)) return;
-        setPhotoSettings((prev) => ({ ...prev, rotation: value }));
-        setSelectedElement("photo");
-    };
-
-    const addText = () => {
-        if (!photoUrl) return; // keep same feature behaviour
-        const id = Date.now().toString();
-        const newText = {
-            id,
-            text: "Your text",
-            x: canvasSize / 2 - 100,
-            y: canvasSize / 2,
-            fontSize: 36,
-            fontFamily,
-            fill: "#000000",
-        };
-        setTexts((prev) => [...prev, newText]);
-        setActiveTextId(id);
-        setSelectedElement({ type: "text", id });
-    };
-
-    const updateTextItem = (updated) => {
-        setTexts((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
-    };
-
-    const handleActiveTextChange = (value) => {
-        setTexts((prev) =>
-            prev.map((t) =>
-                t.id === activeTextId ? { ...t, text: value } : t
-            )
-        );
-    };
-
-    const handleFontChange = (e) => {
-        const value = e.target.value;
-        setFontFamily(value);
-        setTexts((prev) =>
-            prev.map((t) =>
-                t.id === activeTextId ? { ...t, fontFamily: value } : t
-            )
-        );
-    };
-
-    const deleteText = (id) => {
-        setTexts((prev) => prev.filter((t) => t.id !== id));
-        setActiveTextId(null);
-        setSelectedElement(null);
-    };
-
-    const handleChangePhoto = () => {
-        setPhotoUrl(null);
-        setTexts([]);
-        setActiveTextId(null);
-        setSelectedElement(null);
-        setFitScale(1);
-        setZoomFactor(1);
-        setPhotoSettings({
-            x: 0,
-            y: 0,
-            scale: 1,
-            rotation: 0,
-        });
-    };
-
-    const handleTabChange = (_, newValue) => {
-        setActiveTab(newValue);
     };
 
     return (
@@ -340,8 +413,10 @@ export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
                                                 setSelectedElement("photo");
                                                 setActiveTextId(null);
                                             }}
-                                            onChange={(newSettings) =>
+                                            onChange={(newSettings) => {
+                                                saveStateToHistory()
                                                 setPhotoSettings(newSettings)
+                                            }
                                             }
                                         />
                                     )}
