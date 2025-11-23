@@ -59,6 +59,11 @@ export const getAllBirthdaySchedules = async () => {
   return data;
 };
 
+export const getUpcomingBirthdaySchedules = async () => {
+  const { data } = await api.get(`/birthday-schedule/upcoming`);
+  return data;
+};
+
 export const updateBirthdaySchedule = async (id, payload) => {
   const { data } = await api.put(`/birthday-schedule/${id}`, payload);
   return data;

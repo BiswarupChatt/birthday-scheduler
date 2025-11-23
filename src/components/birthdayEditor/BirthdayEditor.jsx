@@ -169,8 +169,9 @@ export default function BirthdayEditor({ employee }) {
             // 1️⃣ Canvas → Blob
             const dataUrl = stageRef.current.toDataURL({ pixelRatio: 2 });
             const blob = await (await fetch(dataUrl)).blob();
+            const timestamp = Date.now();
 
-            uploadedFileName = `birthday-wish/birthday-card-${employee.firstName}.png`;
+            uploadedFileName = `birthday-wish/birthday-card-${employee.firstName}-${timestamp}.png`;
 
             // 2️⃣ Upload image
             const imageUrl = await uploadImage(blob, uploadedFileName);

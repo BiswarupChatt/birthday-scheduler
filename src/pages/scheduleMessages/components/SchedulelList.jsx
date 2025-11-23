@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Box, Typography, Grid, Chip, useTheme } from "@mui/material";
-import { getAllBirthdaySchedules } from "@/lib/axios/apicalls";
+import { getAllBirthdaySchedules, getUpcomingBirthdaySchedules } from "@/lib/axios/apicalls";
 import { format } from "date-fns";
 import ScheduleListSkeleton from "./ScheduleListSkeleton";
 import ScheduleDetailsModal from "./ScheduleDetailsModal";
@@ -67,6 +67,8 @@ export default function ScheduleList() {
             try {
                 const response = await getAllBirthdaySchedules();
                 setSchedules(response);
+                // const response = await getUpcomingBirthdaySchedules();
+                // setSchedules(response.data);
             } catch (error) {
                 console.error("Failed to fetch schedules:", error);
             } finally {
