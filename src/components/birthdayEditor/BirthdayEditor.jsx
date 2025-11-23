@@ -6,13 +6,10 @@ import {
     Tabs,
     Grid,
     TextField,
-    CircularProgress
+    CircularProgress,
 } from "@mui/material";
 
-import {
-    Stage,
-    Layer,
-} from "react-konva";
+import { Stage, Layer } from "react-konva";
 
 import temp1 from "../../assets/templates/temp1.png";
 import temp2 from "../../assets/templates/temp2.png";
@@ -24,10 +21,10 @@ import TemplateImage from "./components/TemplateImage";
 import TemplateTab from "./components/TemplateTab";
 import ImageTab from "./components/ImageTab";
 import TextTab from "./components/TextTab";
-import { createClient } from "@supabase/supabase-js";
 import { createBirthdaySchedule } from "@/lib/axios/apicalls";
 import { useToast } from "@/hooks/ToastContext";
-import { deleteUploadedFile, uploadImage } from "@/utils/methods/uploadImage";
+import { uploadImage } from "@/utils/methods/uploadImage";
+import useHistoryStack from "@/hooks/useHistoryStack"; // 👈 new hook
 
 const DEFAULT_CANVAS_SIZE = 350;
 
@@ -51,48 +48,59 @@ const templates = [
     { id: "t3", name: "Template 3", url: temp3 },
 ];
 
-
 export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
     const stageRef = useRef();
     const canvasWrapperRef = useRef(null);
 
     const [canvasSize, setCanvasSize] = useState(DEFAULT_CANVAS_SIZE);
-    const [selectedTemplateId, setSelectedTemplateId] = useState("t2");
-    const [photoUrl, setPhotoUrl] = useState(null);
-    const [photoSettings, setPhotoSettings] = useState({
-        x: 0,
-        y: 0,
-        scale: 1,
-        rotation: 0,
-    });
-    const [fitScale, setFitScale] = useState(1);
-    const [zoomFactor, setZoomFactor] = useState(1);
-    const [texts, setTexts] = useState([]);
+
     const [activeTextId, setActiveTextId] = useState(null);
     const [fontFamily, setFontFamily] = useState("Arial");
     const [selectedElement, setSelectedElement] = useState(null);
     const [activeTab, setActiveTab] = useState("templates");
-    const [birthdayWishes, setBirthdayWishes] = useState("")
-    const [loading, setLoading] = useState(false)
-    const [history, setHistory] = useState([]);
-    const [future, setFuture] = useState([]);
+    const [birthdayWishes, setBirthdayWishes] = useState("");
+    const [loading, setLoading] = useState(false);
+
+    const toast = useToast();
+
+    // 🧠 Unified editor state with history
+    const { state, setState: setEditorState, undo, redo, beginBatch, endBatch } =
+        useHistoryStack({
+            photoUrl: null,
+            photoSettings: {
+                x: 0,
+                y: 0,
+                scale: 1,
+                rotation: 0,
+            },
+            fitScale: 1,
+            zoomFactor: 1,
+            texts: [],
+            selectedTemplateId: "t2",
+        });
+
+    const {
+        photoUrl,
+        photoSettings,
+        fitScale,
+        zoomFactor,
+        texts,
+        selectedTemplateId,
+    } = state;
 
     const isPhotoSelected = selectedElement === "photo";
-    const isTextSelected =
-        selectedElement && selectedElement.type === "text";
+    const isTextSelected = selectedElement && selectedElement.type === "text";
 
     const currentTemplate = templates.find((t) => t.id === selectedTemplateId);
 
-    const toast = useToast()
-
+    // Responsive canvas sizing
     useEffect(() => {
         const handleResize = () => {
             if (!canvasWrapperRef.current) {
                 setCanvasSize(DEFAULT_CANVAS_SIZE);
                 return;
             }
-            const width =
-                canvasWrapperRef.current.offsetWidth || DEFAULT_CANVAS_SIZE;
+            const width = canvasWrapperRef.current.offsetWidth || DEFAULT_CANVAS_SIZE;
             const size = Math.min(width - 32, DEFAULT_CANVAS_SIZE);
             setCanvasSize(size);
         };
@@ -102,13 +110,17 @@ export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
         return () => window.removeEventListener("resize", handleResize);
     }, []);
 
+    // Keyboard shortcuts: Ctrl+Z / Ctrl+Y / Ctrl+Shift+Z
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (e.ctrlKey && e.key === "z" && !e.shiftKey) {
                 e.preventDefault();
                 undo();
             }
-            if ((e.ctrlKey && e.key === "y") || (e.ctrlKey && e.shiftKey && e.key === "Z")) {
+            if (
+                (e.ctrlKey && e.key === "y") ||
+                (e.ctrlKey && e.shiftKey && e.key === "Z")
+            ) {
                 e.preventDefault();
                 redo();
             }
@@ -116,14 +128,18 @@ export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
 
         window.addEventListener("keydown", handleKeyDown);
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [history, future, photoUrl, texts, photoSettings, selectedTemplateId]);
-
+    }, [undo, redo]);
 
     const loadImageFromFile = (file) => {
         if (!file) return;
 
         const url = URL.createObjectURL(file);
-        setPhotoUrl(url);
+
+        // First set the image URL (history-aware)
+        setEditorState((prev) => ({
+            ...prev,
+            photoUrl: url,
+        }));
         setSelectedElement("photo");
 
         const img = new window.Image();
@@ -133,15 +149,19 @@ export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
             const boxSize = canvasSize || DEFAULT_CANVAS_SIZE;
             const { scale } = fitImageToCanvas(width, height, boxSize);
 
-            setFitScale(scale);
-            setZoomFactor(1);
-
-            setPhotoSettings({
-                x: boxSize / 2,
-                y: boxSize / 2,
-                scale: scale * 1,
-                rotation: 0,
-            });
+            // Then fit and center it
+            setEditorState((prev) => ({
+                ...prev,
+                fitScale: scale,
+                zoomFactor: 1,
+                photoSettings: {
+                    ...prev.photoSettings,
+                    x: boxSize / 2,
+                    y: boxSize / 2,
+                    scale: scale,
+                    rotation: 0,
+                },
+            }));
         };
     };
 
@@ -167,10 +187,11 @@ export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
     };
 
     const handleTemplateChange = (_, id) => {
-        if (id) {
-            saveStateToHistory();
-            setSelectedTemplateId(id);
-        }
+        if (!id) return;
+        setEditorState((prev) => ({
+            ...prev,
+            selectedTemplateId: id,
+        }));
     };
 
     const handleStageMouseDown = (e) => {
@@ -181,13 +202,18 @@ export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
         }
     };
 
+    // ZOOM helpers
     const applyZoom = (zoom) => {
-        saveStateToHistory()
-        setZoomFactor(zoom);
-        setPhotoSettings((prev) => ({
+        beginBatch();
+        setEditorState((prev) => ({
             ...prev,
-            scale: fitScale * zoom,
+            zoomFactor: zoom,
+            photoSettings: {
+                ...prev.photoSettings,
+                scale: prev.fitScale * zoom,
+            },
         }));
+        endBatch();
         setSelectedElement("photo");
     };
 
@@ -198,27 +224,39 @@ export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
     };
 
     const nudgeZoom = (delta) => {
-        saveStateToHistory()
-        setZoomFactor((prevZoom) => {
-            const nextZoom = clamp(prevZoom + delta, 0.1, 3);
-            setPhotoSettings((prev) => ({
+        beginBatch();
+        setEditorState((prev) => {
+            const nextZoom = clamp(prev.zoomFactor + delta, 0.1, 3);
+            return {
                 ...prev,
-                scale: fitScale * nextZoom,
-            }));
-            return nextZoom;
+                zoomFactor: nextZoom,
+                photoSettings: {
+                    ...prev.photoSettings,
+                    scale: prev.fitScale * nextZoom,
+                },
+            };
         });
+        endBatch();
         setSelectedElement("photo");
     };
 
     const changeRotation = (value) => {
-        saveStateToHistory()
         if (Array.isArray(value)) return;
-        setPhotoSettings((prev) => ({ ...prev, rotation: value }));
+        beginBatch();
+        setEditorState((prev) => ({
+            ...prev,
+            photoSettings: {
+                ...prev.photoSettings,
+                rotation: value,
+            },
+        }));
+        endBatch();
         setSelectedElement("photo");
     };
 
+    // TEXT helpers
     const addText = () => {
-        if (!photoUrl) return; // keep same feature behaviour
+        if (!photoUrl) return;
         const id = Date.now().toString();
         const newText = {
             id,
@@ -229,149 +267,124 @@ export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
             fontFamily,
             fill: "#000000",
         };
-        saveStateToHistory()
-        setTexts((prev) => [...prev, newText]);
+
+        setEditorState((prev) => ({
+            ...prev,
+            texts: [...prev.texts, newText],
+        }));
         setActiveTextId(id);
         setSelectedElement({ type: "text", id });
     };
 
     const updateTextItem = (updated) => {
-        saveStateToHistory()
-        setTexts((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+        setEditorState((prev) => ({
+            ...prev,
+            texts: prev.texts.map((t) => (t.id === updated.id ? updated : t)),
+        }));
     };
 
     const handleActiveTextChange = (value) => {
-        setTexts((prev) =>
-            prev.map((t) =>
+        if (!activeTextId) return;
+        setEditorState((prev) => ({
+            ...prev,
+            texts: prev.texts.map((t) =>
                 t.id === activeTextId ? { ...t, text: value } : t
-            )
-        );
+            ),
+        }));
     };
 
     const handleFontChange = (e) => {
         const value = e.target.value;
         setFontFamily(value);
-        setTexts((prev) =>
-            prev.map((t) =>
+        if (!activeTextId) return;
+        setEditorState((prev) => ({
+            ...prev,
+            texts: prev.texts.map((t) =>
                 t.id === activeTextId ? { ...t, fontFamily: value } : t
-            )
-        );
+            ),
+        }));
     };
 
     const deleteText = (id) => {
-        setTexts((prev) => prev.filter((t) => t.id !== id));
+        setEditorState((prev) => ({
+            ...prev,
+            texts: prev.texts.filter((t) => t.id !== id),
+        }));
         setActiveTextId(null);
         setSelectedElement(null);
     };
 
+    // For TextTab: provide a "setTexts" compatible API
+    const setTextsFromTab = (updater) => {
+        setEditorState((prev) => {
+            const nextTexts =
+                typeof updater === "function" ? updater(prev.texts) : updater;
+            return {
+                ...prev,
+                texts: nextTexts,
+            };
+        });
+    };
+
     const handleChangePhoto = () => {
-        saveStateToHistory()
-        setPhotoUrl(null);
-        setTexts([]);
+        beginBatch();
+        setEditorState((prev) => ({
+            ...prev,
+            photoUrl: null,
+            texts: [],
+            photoSettings: {
+                x: 0,
+                y: 0,
+                scale: 1,
+                rotation: 0,
+            },
+            fitScale: 1,
+            zoomFactor: 1,
+        }));
+        endBatch();
+
         setActiveTextId(null);
         setSelectedElement(null);
-        setFitScale(1);
-        setZoomFactor(1);
-        setPhotoSettings({
-            x: 0,
-            y: 0,
-            scale: 1,
-            rotation: 0,
-        });
     };
 
     const handleTabChange = (_, newValue) => {
         setActiveTab(newValue);
     };
 
-    const undo = () => {
-        if (history.length === 0) return;
-
-        const previous = history[history.length - 1];
-        setFuture(f => [getCurrentState(), ...f]);   // save current to redo
-        setHistory(h => h.slice(0, -1));             // remove last
-
-        restoreState(previous);
-    };
-
-    const redo = () => {
-        if (future.length === 0) return;
-
-        const next = future[0];
-        setHistory(h => [...h, getCurrentState()]);  // save current to history
-        setFuture(f => f.slice(1));                  // remove next redo
-
-        restoreState(next);
-    };
-
-    const getCurrentState = () => ({
-        photoUrl,
-        photoSettings: { ...photoSettings },
-        texts: JSON.parse(JSON.stringify(texts)),
-        selectedTemplateId,
-    });
-
-    const restoreState = (state) => {
-        setPhotoUrl(state.photoUrl);
-        setPhotoSettings(state.photoSettings);
-        setTexts(state.texts);
-        setSelectedTemplateId(state.selectedTemplateId);
-    };
-
-
-    const saveStateToHistory = () => {
-        const snapshot = {
-            photoUrl,
-            photoSettings: { ...photoSettings },
-            texts: JSON.parse(JSON.stringify(texts)),
-            selectedTemplateId,
-        };
-
-        setHistory(prev => [...prev, snapshot]);
-        setFuture([]); // clear redo stack after new action
-    };
-
     const handleSchedule = async (employeeId) => {
-        setLoading(true)
+        setLoading(true);
         if (!stageRef.current) return;
         let uploadedFileName = null;
 
         try {
-            // 1️⃣ Canvas → Blob
             const dataUrl = stageRef.current.toDataURL({ pixelRatio: 2 });
             const blob = await (await fetch(dataUrl)).blob();
             const timestamp = Date.now();
 
             uploadedFileName = `birthday-wish/birthday-card-${employee.firstName}-${timestamp}.png`;
 
-            // 2️⃣ Upload image
             const imageUrl = await uploadImage(blob, uploadedFileName);
 
-            // 3️⃣ Call backend API
-            const res = await createBirthdaySchedule({
+            await createBirthdaySchedule({
                 id: employeeId,
                 message: birthdayWishes,
                 imageUrl,
             });
 
             toast.success("Birthday schedule created successfully!");
-            closeModal()
-            onScheduled()
-        }
-        catch (error) {
+            closeModal();
+            onScheduled();
+        } catch (error) {
             console.error("Error occurred:", error);
             toast.error("Something went wrong!");
         } finally {
-            setLoading(false)
-
+            setLoading(false);
         }
     };
 
     return (
         <Box sx={{ bgcolor: "background.default", p: 2 }}>
-
             <Box sx={{ m: 2 }}>
-
                 <Grid container spacing={2} sx={{ alignItems: "stretch" }}>
                     {/* LEFT: CANVAS AREA */}
                     <Grid size={{ xs: 12, md: 7 }} sx={{ display: "flex" }}>
@@ -391,7 +404,6 @@ export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
                                 bgcolor: "background.paper",
                             }}
                         >
-
                             <Stage
                                 width={canvasSize}
                                 height={canvasSize}
@@ -399,7 +411,7 @@ export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
                                 onMouseDown={handleStageMouseDown}
                                 onTouchStart={handleStageMouseDown}
                                 style={{
-                                    border: "1px dashed grey"
+                                    border: "1px dashed grey",
                                 }}
                             >
                                 <Layer>
@@ -414,19 +426,17 @@ export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
                                                 setActiveTextId(null);
                                             }}
                                             onChange={(newSettings) => {
-                                                saveStateToHistory()
-                                                setPhotoSettings(newSettings)
-                                            }
-                                            }
+                                                setEditorState((prev) => ({
+                                                    ...prev,
+                                                    photoSettings: newSettings,
+                                                }));
+                                            }}
                                         />
                                     )}
 
                                     {/* Template overlay */}
                                     {currentTemplate && (
-                                        <TemplateImage
-                                            url={currentTemplate.url}
-                                            size={canvasSize}
-                                        />
+                                        <TemplateImage url={currentTemplate.url} size={canvasSize} />
                                     )}
 
                                     {/* Texts on top */}
@@ -455,7 +465,7 @@ export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
                     </Grid>
 
                     {/* RIGHT: CONTROLLER TABS */}
-                    <Grid size={{ xs: 12, md: 5 }} sx={{ display: "flex" }} >
+                    <Grid size={{ xs: 12, md: 5 }} sx={{ display: "flex" }}>
                         <Box
                             sx={{
                                 flex: 1,
@@ -464,7 +474,7 @@ export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
                                 minWidth: 0,
                                 display: "flex",
                                 flexDirection: "column",
-                                bgcolor: "background.paper"
+                                bgcolor: "background.paper",
                             }}
                         >
                             <Tabs
@@ -480,18 +490,16 @@ export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
 
                             {/* TEMPLATES TAB */}
                             {activeTab === "templates" && (
-                                <>
-                                    <TemplateTab
-                                        selectedTemplateId={selectedTemplateId}
-                                        handleTemplateChange={handleTemplateChange}
-                                        templates={templates}
-                                    />
-                                </>
+                                <TemplateTab
+                                    selectedTemplateId={selectedTemplateId}
+                                    handleTemplateChange={handleTemplateChange}
+                                    templates={templates}
+                                />
                             )}
 
                             {/* IMAGE TAB */}
                             {activeTab === "image" && (
-                                < ImageTab
+                                <ImageTab
                                     openFileSelector={openFileSelector}
                                     photoUrl={photoUrl}
                                     handleChangePhoto={handleChangePhoto}
@@ -506,14 +514,14 @@ export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
 
                             {/* TEXT TAB */}
                             {activeTab === "text" && (
-                                < TextTab
+                                <TextTab
                                     addText={addText}
                                     photoUrl={photoUrl}
                                     isTextSelected={isTextSelected}
                                     texts={texts}
                                     activeTextId={activeTextId}
                                     handleActiveTextChange={handleActiveTextChange}
-                                    setTexts={setTexts}
+                                    setTexts={setTextsFromTab}
                                     fontFamily={fontFamily}
                                     handleFontChange={handleFontChange}
                                     updateTextItem={updateTextItem}
@@ -523,6 +531,7 @@ export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
                         </Box>
                     </Grid>
 
+                    {/* WISHES + ACTION */}
                     <Grid size={12}>
                         <Box
                             sx={{
@@ -532,7 +541,7 @@ export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
                                 minWidth: 0,
                                 display: "flex",
                                 flexDirection: "column",
-                                bgcolor: "background.paper"
+                                bgcolor: "background.paper",
                             }}
                         >
                             <TextField
@@ -541,8 +550,8 @@ export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
                                 multiline
                                 rows={4}
                                 onChange={(e) => {
-                                    e.stopPropagation()
-                                    setBirthdayWishes(e.target.value)
+                                    e.stopPropagation();
+                                    setBirthdayWishes(e.target.value);
                                 }}
                             />
                         </Box>
@@ -554,22 +563,12 @@ export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
                                 onClick={() => handleSchedule(employee._id)}
                                 disabled={!photoUrl || loading}
                             >
-                                {loading ? (
-                                    <CircularProgress size={22} />
-                                ) : (
-                                    "Schedule"
-                                )}
+                                {loading ? <CircularProgress size={22} /> : "Schedule"}
                             </Button>
                         </Box>
                     </Grid>
-
                 </Grid>
             </Box>
-
         </Box>
     );
 }
-
-
-
-
