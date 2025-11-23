@@ -101,13 +101,13 @@ export default function ScheduleDetailsModal({
                         <Typography fontSize={14} fontWeight={600} sx={{ mb: 1 }}>
                             Status:
                         </Typography>
-
+                    
                         <Chip
                             size="small"
-                            onClick={openPopover}
+                            onClick={item.status === "pending" ? openPopover : undefined}
                             {...getStatusChipProps(status, theme)}
                             sx={{
-                                cursor: "pointer",
+                                cursor: item.status === "pending" ? "pointer" : "default",
                                 px: 1,
                                 ...getStatusChipProps(status, theme).sx,
                             }}

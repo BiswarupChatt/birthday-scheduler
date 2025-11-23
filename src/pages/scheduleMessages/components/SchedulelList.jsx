@@ -27,7 +27,11 @@ export default function ScheduleList() {
         setOpen(true);
     };
 
-    const handleClose = () => setOpen(false);
+    const handleClose = () => {
+        setSelectedItem(null)
+        setOpen(false)
+
+    };
 
     const getStatusChipProps = (status, theme) => {
         const colors = {
