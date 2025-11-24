@@ -7,6 +7,10 @@ import {
     Grid,
     TextField,
     CircularProgress,
+    Popover,
+    IconButton,
+    List,
+    ListItemButton
 } from "@mui/material";
 
 import { Stage, Layer } from "react-konva";
@@ -24,7 +28,8 @@ import TextTab from "./components/TextTab";
 import { createBirthdaySchedule } from "@/lib/axios/apicalls";
 import { useToast } from "@/hooks/ToastContext";
 import { uploadImage } from "@/utils/methods/uploadImage";
-import useHistoryStack from "@/hooks/useHistoryStack"; // 👈 new hook
+import useHistoryStack from "@/hooks/useHistoryStack";
+import LightbulbIcon from "@mui/icons-material/Lightbulb";
 
 const DEFAULT_CANVAS_SIZE = 350;
 
@@ -48,22 +53,54 @@ const templates = [
     { id: "t3", name: "Template 3", url: temp3 },
 ];
 
+
+
 export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
+
+    const predefinedWishes = [
+        `🎉🎂 Happy Birthday ${employee.firstName}!! 🎈✨ Wishing you a day full of surprises, joy, and nonstop celebration! 🥳🔥`,
+        `🥳💥 Boom! It’s your special day, ${employee.firstName}! 💫 May your year explode with happiness, success, and lots of fun! 🎉💛`,
+        `🎊🎁 Cheers to you, ${employee.firstName}! 🌟 Hope your birthday is packed with laughter, love, and unforgettable moments! 😄🎉`,
+        `🎂🔥 Light up the candles AND the vibes, ${employee.firstName}! ✨ May you shine brighter this year! 🌟💫`,
+        `🎈💖 Sending you a sky full of joy and a heart full of happiness, ${employee.firstName}! 🌈✨ Happy Birthday! 🎉`,
+        `🌟🎉 Today is ALL about you, ${employee.firstName}! 💛🥳 Celebrate big, laugh louder, and enjoy every moment! 😄🎈`,
+        `🎁💥 Wishing you explosive happiness and unstoppable success this year, ${employee.firstName}! 🔥✨`,
+        `🍰✨ Happy Birthday, ${employee.firstName}! 🎉 May your day be as sweet as cake and as bright as sunshine! ☀️🎈`,
+        `🥳🎊 Celebrate like a boss, ${employee.firstName}! 👑🔥 May this year bring epic moments and big wins! 💥🎉`,
+        `💫🎉 Wishing you cosmic joy and stellar success, ${employee.firstName}! 🌌✨ Have a magical birthday! 🎂🌟`,
+        `🌈💥 Colorful vibes coming your way, ${employee.firstName}! 🎉🎈 May your birthday glow with excitement and smiles! 😄✨`,
+        `🎂💖 Happy Birthday ${employee.firstName}! 🎉 May your year overflow with love, luck & laughter! ✨🌟`,
+        `🔥🎉 Level up day, ${employee.firstName}! 💥🥳 Wishing you a power-packed year ahead! ⚡🎊`,
+        `🎁🌟 Here’s to an awesome birthday, ${employee.firstName}! 😄🎉 Keep shining and keep winning! 💛✨`,
+        `🎉👏 Woohoo! It’s your day, ${employee.firstName}! 🎂🔥 Celebrate with joy, fun, and unlimited smiles! 😄💫`,
+        `🥳✨ Birthday mode: ON! 💥 ${employee.firstName}, wishing you energy, excitement & endless happiness! 🎉🔥`,
+        `🌈🎊 Sending rainbow vibes and joyful wishes to you, ${employee.firstName}! 😄💛 Have a blast! 🎉💥`,
+        `🎉🎁 Happy Birthday ${employee.firstName}! ✨ May your dreams take flight this year! 🚀💫`,
+        `🧁💖 Here’s to sweet moments, loud laughs & bright days ahead, ${employee.firstName}! 🎉✨`,
+        `🎂🔥 Let the celebrations begin, ${employee.firstName}! 💥🎉 Have a rocking birthday filled with joy! 😄🌟`,
+        `🌟🎈 ${employee.firstName}, may your birthday sparkle brighter than fireworks! 🎆✨ Happy Birthday! 🥳💛`,
+        `🎉💫 Cheers to more adventures, more growth & more happiness ahead, ${employee.firstName}! 🚀✨`,
+        `🔥🎂 Happy Birthday Legend — ${employee.firstName}! 🥳🌟 Keep shining, keep smiling, keep winning! 💥🎉`,
+        `🎊✨ May your day overflow with blessings, surprises, and good vibes, ${employee.firstName}! 🎉❤️`,
+        `🎁🎉 Have a blast today, ${employee.firstName}! 🥳💥 Sending you tons of happiness & excitement! 😄✨`,
+    ];
+
+
+
     const stageRef = useRef();
     const canvasWrapperRef = useRef(null);
 
     const [canvasSize, setCanvasSize] = useState(DEFAULT_CANVAS_SIZE);
-
     const [activeTextId, setActiveTextId] = useState(null);
     const [fontFamily, setFontFamily] = useState("Arial");
     const [selectedElement, setSelectedElement] = useState(null);
     const [activeTab, setActiveTab] = useState("templates");
     const [birthdayWishes, setBirthdayWishes] = useState("");
     const [loading, setLoading] = useState(false);
+    const [anchorEl, setAnchorEl] = useState(null);
 
     const toast = useToast();
 
-    // 🧠 Unified editor state with history
     const { state, setState: setEditorState, undo, redo, beginBatch, endBatch } =
         useHistoryStack({
             photoUrl: null,
@@ -90,10 +127,9 @@ export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
 
     const isPhotoSelected = selectedElement === "photo";
     const isTextSelected = selectedElement && selectedElement.type === "text";
-
+    const open = Boolean(anchorEl);
     const currentTemplate = templates.find((t) => t.id === selectedTemplateId);
 
-    // Responsive canvas sizing
     useEffect(() => {
         const handleResize = () => {
             if (!canvasWrapperRef.current) {
@@ -110,7 +146,6 @@ export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
         return () => window.removeEventListener("resize", handleResize);
     }, []);
 
-    // Keyboard shortcuts: Ctrl+Z / Ctrl+Y / Ctrl+Shift+Z
     useEffect(() => {
         const handleKeyDown = (e) => {
             if (e.ctrlKey && e.key === "z" && !e.shiftKey) {
@@ -130,12 +165,20 @@ export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
         return () => window.removeEventListener("keydown", handleKeyDown);
     }, [undo, redo]);
 
+    const handleIdeaClick = (event) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleClosePopover = () => {
+        setAnchorEl(null);
+    };
+
+
     const loadImageFromFile = (file) => {
         if (!file) return;
 
         const url = URL.createObjectURL(file);
 
-        // First set the image URL (history-aware)
         setEditorState((prev) => ({
             ...prev,
             photoUrl: url,
@@ -149,7 +192,6 @@ export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
             const boxSize = canvasSize || DEFAULT_CANVAS_SIZE;
             const { scale } = fitImageToCanvas(width, height, boxSize);
 
-            // Then fit and center it
             setEditorState((prev) => ({
                 ...prev,
                 fitScale: scale,
@@ -202,7 +244,6 @@ export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
         }
     };
 
-    // ZOOM helpers
     const applyZoom = (zoom) => {
         beginBatch();
         setEditorState((prev) => ({
@@ -254,7 +295,6 @@ export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
         setSelectedElement("photo");
     };
 
-    // TEXT helpers
     const addText = () => {
         if (!photoUrl) return;
         const id = Date.now().toString();
@@ -314,7 +354,6 @@ export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
         setSelectedElement(null);
     };
 
-    // For TextTab: provide a "setTexts" compatible API
     const setTextsFromTab = (updater) => {
         setEditorState((prev) => {
             const nextTexts =
@@ -386,7 +425,6 @@ export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
         <Box sx={{ bgcolor: "background.default", p: 2 }}>
             <Box sx={{ m: 2 }}>
                 <Grid container spacing={2} sx={{ alignItems: "stretch" }}>
-                    {/* LEFT: CANVAS AREA */}
                     <Grid size={{ xs: 12, md: 7 }} sx={{ display: "flex" }}>
                         <Box
                             ref={canvasWrapperRef}
@@ -415,7 +453,6 @@ export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
                                 }}
                             >
                                 <Layer>
-                                    {/* Base photo */}
                                     {photoUrl && (
                                         <EditableImage
                                             imageUrl={photoUrl}
@@ -434,12 +471,10 @@ export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
                                         />
                                     )}
 
-                                    {/* Template overlay */}
                                     {currentTemplate && (
                                         <TemplateImage url={currentTemplate.url} size={canvasSize} />
                                     )}
 
-                                    {/* Texts on top */}
                                     {texts.map((item) => (
                                         <EditableText
                                             key={item.id}
@@ -464,7 +499,6 @@ export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
                         </Box>
                     </Grid>
 
-                    {/* RIGHT: CONTROLLER TABS */}
                     <Grid size={{ xs: 12, md: 5 }} sx={{ display: "flex" }}>
                         <Box
                             sx={{
@@ -488,7 +522,6 @@ export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
                                 <Tab label="Text" value="text" />
                             </Tabs>
 
-                            {/* TEMPLATES TAB */}
                             {activeTab === "templates" && (
                                 <TemplateTab
                                     selectedTemplateId={selectedTemplateId}
@@ -497,7 +530,6 @@ export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
                                 />
                             )}
 
-                            {/* IMAGE TAB */}
                             {activeTab === "image" && (
                                 <ImageTab
                                     openFileSelector={openFileSelector}
@@ -512,7 +544,6 @@ export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
                                 />
                             )}
 
-                            {/* TEXT TAB */}
                             {activeTab === "text" && (
                                 <TextTab
                                     addText={addText}
@@ -531,7 +562,6 @@ export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
                         </Box>
                     </Grid>
 
-                    {/* WISHES + ACTION */}
                     <Grid size={12}>
                         <Box
                             sx={{
@@ -544,16 +574,56 @@ export default function BirthdayEditor({ employee, closeModal, onScheduled }) {
                                 bgcolor: "background.paper",
                             }}
                         >
-                            <TextField
-                                label={`Add Wishes for ${employee.firstName}`}
-                                value={birthdayWishes}
-                                multiline
-                                rows={4}
-                                onChange={(e) => {
-                                    e.stopPropagation();
-                                    setBirthdayWishes(e.target.value);
+                            <Box sx={{ position: "relative" }}>
+                                <TextField
+                                    label={`Add Wishes for ${employee.firstName}`}
+                                    value={birthdayWishes}
+                                    multiline
+                                    rows={4}
+                                    fullWidth
+                                    onChange={(e) => {
+                                        e.stopPropagation();
+                                        setBirthdayWishes(e.target.value);
+                                    }}
+                                />
+
+                                {/* Idea Icon Button */}
+                                <IconButton
+                                    sx={{ position: "absolute", right: 10, bottom: 10 }}
+                                    onClick={handleIdeaClick}
+                                >
+                                    <LightbulbIcon />
+                                </IconButton>
+                            </Box>
+
+                            <Popover
+                                open={open}
+                                anchorEl={anchorEl}
+                                onClose={handleClosePopover}
+                                anchorOrigin={{
+                                    vertical: "top",
+                                    horizontal: "right",
                                 }}
-                            />
+                                transformOrigin={{
+                                    vertical: "bottom",
+                                    horizontal: "right",
+                                }}
+                            >
+                                <List sx={{ width: 300, p: 1, maxHeight: "200px" }}>
+                                    {predefinedWishes.map((wish, index) => (
+                                        <ListItemButton
+                                            key={index}
+                                            onClick={() => {
+                                                setBirthdayWishes(wish);
+                                                handleClosePopover();
+                                            }}
+                                        >
+                                            {wish}
+                                        </ListItemButton>
+                                    ))}
+                                </List>
+                            </Popover>
+
                         </Box>
 
                         <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 1 }}>

@@ -7,7 +7,6 @@ import BirthdayEditor from "@/components/birthdayEditor/BirthdayEditor";
 const Dashboard = () => {
   return (
     <>
-      <SectionHeader title="Dashboard" />
       <BirthdayList />
     </>
   )

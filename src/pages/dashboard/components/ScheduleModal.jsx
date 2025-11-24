@@ -4,9 +4,6 @@ import BirthdayEditor from "@/components/birthdayEditor/BirthdayEditor";
 
 export default function ScheduleModal({ open, onClose, onScheduled, employee }) {
     if (!employee) return null;
-
-    console.log("employee", employee)
-
     return (
         <Modal open={open} onClose={onClose}>
 

@@ -20,8 +20,8 @@ export default function Login() {
     const setIsAuthenticated = useSetAtom(isAuthenticatedAtom);
 
     const [formData, setFormData] = useState({
-        username: "admin2",
-        password: "1234"
+        username: "admin",
+        password: "admin"
     });
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
